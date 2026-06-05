@@ -10,11 +10,27 @@ interface SaveModalProps {
 export default function SaveModal({ open, onClose }: SaveModalProps) {
   const { config, analysis: storeAnalysis } = useSimulationStore();
   const previewRef = useRef<HTMLCanvasElement>(null);
+  const starmapRef = useRef<HTMLImageElement | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [previewReady, setPreviewReady] = useState(false);
 
   // Always have a valid analysis object — fall back to local computation
   const analysis = storeAnalysis ?? computeLocalAnalysis(config);
+
+  // Load starmap image once
+  useEffect(() => {
+    if (!starmapRef.current) {
+      const img = new Image();
+      img.src = "/starmap.png";
+      img.onload = () => {
+        starmapRef.current = img;
+        console.log("Starmap loaded for SaveModal preview");
+      };
+      img.onerror = () => {
+        console.warn("Failed to load starmap.png for preview");
+      };
+    }
+  }, []);
 
   const schwarzschildRadius = (config.mass * 2.95).toFixed(2);
   const hawkingTemp =
@@ -64,22 +80,34 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
 
     try {
       // ── Background ──────────────────────────────────────────────
-      ctx.fillStyle = "#0a0a0a";
-      ctx.fillRect(0, 0, W, H);
+      // Draw starmap if available, otherwise fallback to procedural stars
+      if (starmapRef.current && starmapRef.current.complete) {
+        const pattern = ctx.createPattern(starmapRef.current, "repeat");
+        if (pattern) {
+          ctx.fillStyle = pattern;
+          ctx.fillRect(0, 0, W, H);
+        } else {
+          ctx.fillStyle = "#0a0a0a";
+          ctx.fillRect(0, 0, W, H);
+        }
+      } else {
+        // Fallback: procedural starfield
+        ctx.fillStyle = "#0a0a0a";
+        ctx.fillRect(0, 0, W, H);
 
-      // Subtle star field
-      ctx.fillStyle = "rgba(255,255,255,0.6)";
-      const rng = (seed: number) => {
-        const x = Math.sin(seed) * 10000;
-        return x - Math.floor(x);
-      };
-      for (let i = 0; i < 180; i++) {
-        const sx = rng(i * 3.1) * W;
-        const sy = rng(i * 7.9) * H;
-        const sr = rng(i * 2.3) * 1.2;
-        ctx.beginPath();
-        ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.6)";
+        const rng = (seed: number) => {
+          const x = Math.sin(seed) * 10000;
+          return x - Math.floor(x);
+        };
+        for (let i = 0; i < 180; i++) {
+          const sx = rng(i * 3.1) * W;
+          const sy = rng(i * 7.9) * H;
+          const sr = rng(i * 2.3) * 1.2;
+          ctx.beginPath();
+          ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
 
       // ── Black hole visual (left half) ───────────────────────────
