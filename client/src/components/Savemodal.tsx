@@ -80,116 +80,74 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
 
     try {
       // ── Background ──────────────────────────────────────────────
-      // Draw starmap if available, otherwise fallback to procedural stars
-      if (starmapRef.current && starmapRef.current.complete) {
-        const pattern = ctx.createPattern(starmapRef.current, "repeat");
-        if (pattern) {
-          ctx.fillStyle = pattern;
-          ctx.fillRect(0, 0, W, H);
-        } else {
-          ctx.fillStyle = "#0a0a0a";
-          ctx.fillRect(0, 0, W, H);
-        }
-      } else {
-        // Fallback: procedural starfield
-        ctx.fillStyle = "#0a0a0a";
-        ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, W, H);
 
-        ctx.fillStyle = "rgba(255,255,255,0.6)";
-        const rng = (seed: number) => {
-          const x = Math.sin(seed) * 10000;
-          return x - Math.floor(x);
-        };
-        for (let i = 0; i < 180; i++) {
-          const sx = rng(i * 3.1) * W;
-          const sy = rng(i * 7.9) * H;
-          const sr = rng(i * 2.3) * 1.2;
-          ctx.beginPath();
-          ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
-      // ── Black hole visual (left half) ───────────────────────────
-      const cx = W * 0.28;
-      const cy = H * 0.42;
-      const rs = Math.min(W, H) * 0.11;
-
-      // Outer glow rings
-      for (let i = 4; i >= 1; i--) {
-        const grad = ctx.createRadialGradient(
-          cx,
-          cy,
-          rs * i * 0.5,
-          cx,
-          cy,
-          rs * i * 1.6,
-        );
-        grad.addColorStop(0, `rgba(59,130,246,${0.04 * i})`);
-        grad.addColorStop(1, "rgba(59,130,246,0)");
-        ctx.fillStyle = grad;
-        ctx.beginPath();
-        ctx.arc(cx, cy, rs * i * 1.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Accretion disk
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.scale(1, 0.28);
-      for (let i = 0; i < 3; i++) {
-        const diskGrad = ctx.createRadialGradient(
-          0,
-          0,
-          rs * 1.1,
-          0,
-          0,
-          rs * (3.2 - i * 0.3),
-        );
-        diskGrad.addColorStop(
-          0,
-          i === 0
-            ? "rgba(220,200,255,0.55)"
-            : i === 1
-              ? "rgba(255,160,60,0.35)"
-              : "rgba(180,40,20,0.2)",
-        );
-        diskGrad.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = diskGrad;
-        ctx.beginPath();
-        ctx.arc(0, 0, rs * (3.2 - i * 0.3), 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-
-      // Corona glow
-      const coronaGrad = ctx.createRadialGradient(
-        cx,
-        cy,
-        rs * 0.9,
-        cx,
-        cy,
-        rs * 2.2,
+      // ── Capture live WebGL canvas (left half) ───────────────────
+      const liveCanvas = document.querySelector<HTMLCanvasElement>(
+        "canvas[data-blackhole-canvas]"
       );
-      coronaGrad.addColorStop(0, "rgba(100,160,255,0.22)");
-      coronaGrad.addColorStop(0.5, "rgba(59,100,200,0.08)");
-      coronaGrad.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = coronaGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, rs * 2.2, 0, Math.PI * 2);
-      ctx.fill();
 
-      // Event horizon
-      const ehGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rs);
-      ehGrad.addColorStop(0.7, "#000000");
-      ehGrad.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = ehGrad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, rs, 0, Math.PI * 2);
-      ctx.fill();
+      const panelX = W * 0.52;
+
+      if (liveCanvas && liveCanvas.width > 0 && liveCanvas.height > 0) {
+        // Draw the live WebGL visualization into the left portion
+        const leftW = panelX - 8;
+        const leftH = H;
+        const srcAspect = liveCanvas.width / liveCanvas.height;
+        const dstAspect = leftW / leftH;
+
+        let sx = 0, sy = 0, sw = liveCanvas.width, sh = liveCanvas.height;
+        if (srcAspect > dstAspect) {
+          // Source is wider — crop sides
+          sw = liveCanvas.height * dstAspect;
+          sx = (liveCanvas.width - sw) / 2;
+        } else {
+          // Source is taller — crop top/bottom
+          sh = liveCanvas.width / dstAspect;
+          sy = (liveCanvas.height - sh) / 2;
+        }
+
+        ctx.drawImage(liveCanvas, sx, sy, sw, sh, 0, 0, leftW, leftH);
+      } else {
+        // Fallback: draw starmap or procedural starfield if live canvas unavailable
+        if (starmapRef.current && starmapRef.current.complete) {
+          const pattern = ctx.createPattern(starmapRef.current, "repeat");
+          if (pattern) {
+            ctx.fillStyle = pattern;
+            ctx.fillRect(0, 0, panelX - 8, H);
+          }
+        } else {
+          ctx.fillStyle = "rgba(255,255,255,0.6)";
+          const rng = (seed: number) => {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+          };
+          for (let i = 0; i < 180; i++) {
+            const sx = rng(i * 3.1) * (panelX - 8);
+            const sy = rng(i * 7.9) * H;
+            const sr = rng(i * 2.3) * 1.2;
+            ctx.beginPath();
+            ctx.arc(sx, sy, sr, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+
+        // Minimal black hole fallback circle
+        const cx = (panelX - 8) * 0.5;
+        const cy = H * 0.5;
+        const rs = Math.min(panelX - 8, H) * 0.11;
+        const ehGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rs * 2);
+        ehGrad.addColorStop(0, "#000000");
+        ehGrad.addColorStop(0.5, "rgba(59,130,246,0.15)");
+        ehGrad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = ehGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rs * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // ── Right panel — data readout ───────────────────────────────
-      const panelX = W * 0.52;
       const panelW = W - panelX - 24;
 
       ctx.fillStyle = "rgba(17,17,17,0.92)";

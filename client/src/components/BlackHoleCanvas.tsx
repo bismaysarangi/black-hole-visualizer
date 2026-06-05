@@ -28,10 +28,11 @@ export default function BlackHoleCanvas() {
       stateRef.current.startTime = Date.now();
     }
 
+    const glOpts = { preserveDrawingBuffer: true, alpha: false };
     const gl =
-      canvas.getContext("webgl2") ||
-      canvas.getContext("webgl") ||
-      (canvas.getContext("experimental-webgl") as WebGLRenderingContext | null);
+      canvas.getContext("webgl2", glOpts) ||
+      canvas.getContext("webgl", glOpts) ||
+      (canvas.getContext("experimental-webgl", glOpts) as WebGLRenderingContext | null);
     if (!gl) {
       console.error("WebGL not supported in this browser");
       return;
@@ -398,6 +399,7 @@ export default function BlackHoleCanvas() {
   return (
     <canvas
       ref={canvasRef}
+      data-blackhole-canvas
       style={{ width: "100%", height: "100%", display: "block" }}
     />
   );
