@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useSimulationStore } from "../store/simulationStore";
-import { computeLocalAnalysis } from "../utils/localPhysics";
+import { computeLocalAnalysis } from "../utils/localphysics";
 
 interface SaveModalProps {
   open: boolean;
