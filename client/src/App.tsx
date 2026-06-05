@@ -275,6 +275,10 @@ export default function App() {
             position: "relative",
             overflow: "hidden",
             minWidth: 0,
+            backgroundImage: "url(/starmap.png)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
           }}
         >
           <BlackHoleCanvas />
