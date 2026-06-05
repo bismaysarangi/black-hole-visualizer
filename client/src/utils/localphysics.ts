@@ -2,7 +2,7 @@ import type { FullAnalysis, BlackHoleConfig } from "../types/blackhole";
 
 /** Pure-JS physics fallback — runs when the API is unreachable (405 / network error). */
 export function computeLocalAnalysis(config: BlackHoleConfig): FullAnalysis {
-  const { mass, spin, inclination } = config;
+  const { mass, inclination } = config;
 
   // Schwarzschild radius (km) — used as our unit
   const Rs = mass * 2.95;
