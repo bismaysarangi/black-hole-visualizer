@@ -19,17 +19,21 @@ export default function BlackHoleCanvas() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.error("Canvas ref not available");
+      return;
+    }
 
     if (stateRef.current.startTime === 0) {
       stateRef.current.startTime = Date.now();
     }
 
     const gl =
+      canvas.getContext("webgl2") ||
       canvas.getContext("webgl") ||
       (canvas.getContext("experimental-webgl") as WebGLRenderingContext | null);
     if (!gl) {
-      console.error("WebGL not supported");
+      console.error("WebGL not supported in this browser");
       return;
     }
 
@@ -249,17 +253,36 @@ export default function BlackHoleCanvas() {
     function compile(type: number, src: string) {
       if (!gl) throw new Error("WebGL context not available");
       const s = gl.createShader(type)!;
+      if (!s) {
+        throw new Error("Failed to create shader");
+      }
       gl.shaderSource(s, src);
       gl.compileShader(s);
-      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
-        console.error(gl.getShaderInfoLog(s));
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        const err = gl.getShaderInfoLog(s);
+        console.error(
+          `Shader compilation error (${type === gl.VERTEX_SHADER ? "vertex" : "fragment"}):`,
+          err,
+        );
+        throw new Error(`Shader compilation failed: ${err}`);
+      }
       return s;
     }
 
     const prog = gl.createProgram()!;
+    if (!prog) {
+      console.error("Failed to create WebGL program");
+      return;
+    }
     gl.attachShader(prog, compile(gl.VERTEX_SHADER, vertSrc));
     gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fragSrc));
     gl.linkProgram(prog);
+
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      const err = gl.getProgramInfoLog(prog);
+      console.error("Program linking error:", err);
+      return;
+    }
     gl.useProgram(prog);
 
     // ── Full-screen quad ─────────────────────────────────────────
@@ -303,18 +326,32 @@ export default function BlackHoleCanvas() {
     const img = new Image();
     img.src = "/starmap.png";
     img.onload = () => {
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-      gl.generateMipmap(gl.TEXTURE_2D);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-      gl.texParameteri(
-        gl.TEXTURE_2D,
-        gl.TEXTURE_MIN_FILTER,
-        gl.LINEAR_MIPMAP_LINEAR,
-      );
+      try {
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+        gl.texImage2D(
+          gl.TEXTURE_2D,
+          0,
+          gl.RGBA,
+          gl.RGBA,
+          gl.UNSIGNED_BYTE,
+          img,
+        );
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.texParameteri(
+          gl.TEXTURE_2D,
+          gl.TEXTURE_MIN_FILTER,
+          gl.LINEAR_MIPMAP_LINEAR,
+        );
+        console.log("Starmap texture loaded successfully");
+      } catch (e) {
+        console.error("Error loading starmap texture:", e);
+      }
     };
-    img.onerror = () => console.error("Failed to load /public/starmap.png");
+    img.onerror = () => {
+      console.warn("Failed to load /starmap.png - will use fallback colors");
+    };
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, tex);
@@ -322,29 +359,33 @@ export default function BlackHoleCanvas() {
 
     // ── Render loop ──────────────────────────────────────────────
     const loop = () => {
-      const t = (Date.now() - stateRef.current.startTime) / 1000;
-      const cfg = stateRef.current.config;
-      const mass = Math.log10(cfg.mass + 1) / Math.log10(1e7 + 1);
+      try {
+        const t = (Date.now() - stateRef.current.startTime) / 1000;
+        const cfg = stateRef.current.config;
+        const mass = Math.log10(cfg.mass + 1) / Math.log10(1e7 + 1);
 
-      if (Math.floor(t) % 3 === 0 && t % 1 < 0.02) {
-        console.log(
-          "canvas cfg:",
-          cfg.accretion_rate,
-          cfg.inclination,
-          cfg.hawking_on,
-        );
+        if (Math.floor(t) % 3 === 0 && t % 1 < 0.02) {
+          console.log(
+            "canvas cfg:",
+            cfg.accretion_rate,
+            cfg.inclination,
+            cfg.hawking_on,
+          );
+        }
+
+        gl.uniform1f(uTime, t);
+        gl.uniform1f(uMass, mass);
+        gl.uniform1f(uSpin, cfg.spin);
+        gl.uniform1f(uAccretion, cfg.accretion_rate);
+        gl.uniform1f(uInclination, cfg.inclination);
+        gl.uniform1f(uHawking, cfg.hawking_on ? 1.0 : 0.0);
+        gl.uniform2f(uResolution, canvas.width, canvas.height);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+        stateRef.current.animId = requestAnimationFrame(loop);
+      } catch (e) {
+        console.error("Render loop error:", e);
       }
-
-      gl.uniform1f(uTime, t);
-      gl.uniform1f(uMass, mass);
-      gl.uniform1f(uSpin, cfg.spin);
-      gl.uniform1f(uAccretion, cfg.accretion_rate);
-      gl.uniform1f(uInclination, cfg.inclination);
-      gl.uniform1f(uHawking, cfg.hawking_on ? 1.0 : 0.0);
-      gl.uniform2f(uResolution, canvas.width, canvas.height);
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-      stateRef.current.animId = requestAnimationFrame(loop);
     };
     loop();
 

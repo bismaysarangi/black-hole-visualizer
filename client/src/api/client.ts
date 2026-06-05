@@ -2,8 +2,17 @@ import axios from "axios";
 import type { BlackHoleConfig, FullAnalysis } from "../types/blackhole";
 import type { NASACatalog } from "../types/nasa";
 
+const baseURL = import.meta.env.VITE_API_URL;
+
+if (!baseURL) {
+  console.warn(
+    "⚠️  VITE_API_URL not configured. API calls will use local fallback. " +
+      "To enable the full physics API, set VITE_API_URL in your environment.",
+  );
+}
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: baseURL || "http://localhost:8000", // fallback for development
   headers: { "Content-Type": "application/json" },
   timeout: 15000,
 });

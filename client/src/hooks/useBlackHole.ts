@@ -12,10 +12,21 @@ export function useBlackHole() {
     async (cfg: BlackHoleConfig) => {
       setLoading(true);
       try {
+        // Check if API URL is configured
+        if (!import.meta.env.VITE_API_URL) {
+          console.warn(
+            "VITE_API_URL not configured. Using local physics fallback. " +
+              "Set VITE_API_URL to your API server URL in environment variables.",
+          );
+          setAnalysis(computeLocalAnalysis(cfg));
+          setLoading(false);
+          return;
+        }
+
         const result = await physicsAPI.fullAnalysis(cfg);
         setAnalysis(result);
       } catch (err) {
-        // API unavailable (405, network error, missing VITE_API_URL, etc.)
+        // API unavailable (405, network error, server down, etc.)
         // Fall back to client-side physics so the visualizer still works.
         console.warn("Physics API unavailable — using local fallback:", err);
         setAnalysis(computeLocalAnalysis(cfg));

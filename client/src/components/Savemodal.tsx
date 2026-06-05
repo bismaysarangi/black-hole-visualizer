@@ -49,219 +49,257 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
 
   const drawPreview = useCallback(() => {
     const canvas = previewRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.error("Canvas ref not available for preview");
+      return;
+    }
 
     const W = canvas.width;
     const H = canvas.height;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // ── Background ──────────────────────────────────────────────
-    ctx.fillStyle = "#0a0a0a";
-    ctx.fillRect(0, 0, W, H);
-
-    // Subtle star field
-    ctx.fillStyle = "rgba(255,255,255,0.6)";
-    const rng = (seed: number) => {
-      const x = Math.sin(seed) * 10000;
-      return x - Math.floor(x);
-    };
-    for (let i = 0; i < 180; i++) {
-      const sx = rng(i * 3.1) * W;
-      const sy = rng(i * 7.9) * H;
-      const sr = rng(i * 2.3) * 1.2;
-      ctx.beginPath();
-      ctx.arc(sx, sy, sr, 0, Math.PI * 2);
-      ctx.fill();
+    if (!ctx) {
+      console.error("Could not get 2D context from preview canvas");
+      return;
     }
 
-    // ── Black hole visual (left half) ───────────────────────────
-    const cx = W * 0.28;
-    const cy = H * 0.42;
-    const rs = Math.min(W, H) * 0.11;
+    try {
+      // ── Background ──────────────────────────────────────────────
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, W, H);
 
-    // Outer glow rings
-    for (let i = 4; i >= 1; i--) {
-      const grad = ctx.createRadialGradient(
-        cx,
-        cy,
-        rs * i * 0.5,
-        cx,
-        cy,
-        rs * i * 1.6,
-      );
-      grad.addColorStop(0, `rgba(59,130,246,${0.04 * i})`);
-      grad.addColorStop(1, "rgba(59,130,246,0)");
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(cx, cy, rs * i * 1.6, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Accretion disk
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.scale(1, 0.28);
-    for (let i = 0; i < 3; i++) {
-      const diskGrad = ctx.createRadialGradient(
-        0,
-        0,
-        rs * 1.1,
-        0,
-        0,
-        rs * (3.2 - i * 0.3),
-      );
-      diskGrad.addColorStop(
-        0,
-        i === 0
-          ? "rgba(220,200,255,0.55)"
-          : i === 1
-            ? "rgba(255,160,60,0.35)"
-            : "rgba(180,40,20,0.2)",
-      );
-      diskGrad.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = diskGrad;
-      ctx.beginPath();
-      ctx.arc(0, 0, rs * (3.2 - i * 0.3), 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // Corona glow
-    const coronaGrad = ctx.createRadialGradient(
-      cx,
-      cy,
-      rs * 0.9,
-      cx,
-      cy,
-      rs * 2.2,
-    );
-    coronaGrad.addColorStop(0, "rgba(100,160,255,0.22)");
-    coronaGrad.addColorStop(0.5, "rgba(59,100,200,0.08)");
-    coronaGrad.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = coronaGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, rs * 2.2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Event horizon
-    const ehGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rs);
-    ehGrad.addColorStop(0.7, "#000000");
-    ehGrad.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = ehGrad;
-    ctx.beginPath();
-    ctx.arc(cx, cy, rs, 0, Math.PI * 2);
-    ctx.fill();
-
-    // ── Right panel — data readout ───────────────────────────────
-    const panelX = W * 0.52;
-    const panelW = W - panelX - 24;
-
-    ctx.fillStyle = "rgba(17,17,17,0.92)";
-    ctx.strokeStyle = "#222222";
-    ctx.lineWidth = 1;
-    roundRect(ctx, panelX, 20, panelW, H - 40, 8);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = "#3b82f6";
-    ctx.fillRect(panelX + 16, 36, 3, 22);
-
-    ctx.fillStyle = "#e2e8f0";
-    ctx.font = "600 13px 'JetBrains Mono', monospace";
-    ctx.fillText("BLACK HOLE VISUALIZER", panelX + 26, 52);
-
-    ctx.fillStyle = "#808080";
-    ctx.font = "10px 'JetBrains Mono', monospace";
-    ctx.fillText("SIMULATION READOUT", panelX + 26, 67);
-
-    ctx.strokeStyle = "#222222";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(panelX + 16, 78);
-    ctx.lineTo(panelX + panelW - 16, 78);
-    ctx.stroke();
-
-    const rowH = (H - 40 - 90 - 40) / rows.length;
-    rows.forEach(([key, val], idx) => {
-      const ry = 90 + idx * rowH;
-
-      if (idx % 2 === 0) {
-        ctx.fillStyle = "rgba(255,255,255,0.015)";
-        roundRect(ctx, panelX + 12, ry - 2, panelW - 24, rowH - 1, 3);
+      // Subtle star field
+      ctx.fillStyle = "rgba(255,255,255,0.6)";
+      const rng = (seed: number) => {
+        const x = Math.sin(seed) * 10000;
+        return x - Math.floor(x);
+      };
+      for (let i = 0; i < 180; i++) {
+        const sx = rng(i * 3.1) * W;
+        const sy = rng(i * 7.9) * H;
+        const sr = rng(i * 2.3) * 1.2;
+        ctx.beginPath();
+        ctx.arc(sx, sy, sr, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      ctx.fillStyle = "#808080";
-      ctx.font = "9px 'JetBrains Mono', monospace";
-      ctx.fillText(key.toUpperCase(), panelX + 20, ry + rowH * 0.55);
+      // ── Black hole visual (left half) ───────────────────────────
+      const cx = W * 0.28;
+      const cy = H * 0.42;
+      const rs = Math.min(W, H) * 0.11;
+
+      // Outer glow rings
+      for (let i = 4; i >= 1; i--) {
+        const grad = ctx.createRadialGradient(
+          cx,
+          cy,
+          rs * i * 0.5,
+          cx,
+          cy,
+          rs * i * 1.6,
+        );
+        grad.addColorStop(0, `rgba(59,130,246,${0.04 * i})`);
+        grad.addColorStop(1, "rgba(59,130,246,0)");
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rs * i * 1.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Accretion disk
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1, 0.28);
+      for (let i = 0; i < 3; i++) {
+        const diskGrad = ctx.createRadialGradient(
+          0,
+          0,
+          rs * 1.1,
+          0,
+          0,
+          rs * (3.2 - i * 0.3),
+        );
+        diskGrad.addColorStop(
+          0,
+          i === 0
+            ? "rgba(220,200,255,0.55)"
+            : i === 1
+              ? "rgba(255,160,60,0.35)"
+              : "rgba(180,40,20,0.2)",
+        );
+        diskGrad.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = diskGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, rs * (3.2 - i * 0.3), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // Corona glow
+      const coronaGrad = ctx.createRadialGradient(
+        cx,
+        cy,
+        rs * 0.9,
+        cx,
+        cy,
+        rs * 2.2,
+      );
+      coronaGrad.addColorStop(0, "rgba(100,160,255,0.22)");
+      coronaGrad.addColorStop(0.5, "rgba(59,100,200,0.08)");
+      coronaGrad.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = coronaGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rs * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Event horizon
+      const ehGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rs);
+      ehGrad.addColorStop(0.7, "#000000");
+      ehGrad.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = ehGrad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rs, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ── Right panel — data readout ───────────────────────────────
+      const panelX = W * 0.52;
+      const panelW = W - panelX - 24;
+
+      ctx.fillStyle = "rgba(17,17,17,0.92)";
+      ctx.strokeStyle = "#222222";
+      ctx.lineWidth = 1;
+      roundRect(ctx, panelX, 20, panelW, H - 40, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#3b82f6";
+      ctx.fillRect(panelX + 16, 36, 3, 22);
 
       ctx.fillStyle = "#e2e8f0";
-      ctx.font = "500 10px 'JetBrains Mono', monospace";
-      const valW = ctx.measureText(val).width;
-      ctx.fillText(val, panelX + panelW - 20 - valW, ry + rowH * 0.55);
+      ctx.font = "600 13px 'JetBrains Mono', monospace";
+      ctx.fillText("BLACK HOLE VISUALIZER", panelX + 26, 52);
 
-      ctx.strokeStyle = "#1e1e1e";
+      ctx.fillStyle = "#808080";
+      ctx.font = "10px 'JetBrains Mono', monospace";
+      ctx.fillText("SIMULATION READOUT", panelX + 26, 67);
+
+      ctx.strokeStyle = "#222222";
       ctx.lineWidth = 1;
-      ctx.setLineDash([2, 3]);
-      const keyW = ctx.measureText(key.toUpperCase()).width;
       ctx.beginPath();
-      ctx.moveTo(panelX + 24 + keyW + 4, ry + rowH * 0.5);
-      ctx.lineTo(panelX + panelW - 24 - valW - 4, ry + rowH * 0.5);
+      ctx.moveTo(panelX + 16, 78);
+      ctx.lineTo(panelX + panelW - 16, 78);
       ctx.stroke();
-      ctx.setLineDash([]);
-    });
 
-    ctx.fillStyle = "#2e2e2e";
-    ctx.fillRect(panelX + 12, H - 52, panelW - 24, 1);
+      const rowH = (H - 40 - 90 - 40) / rows.length;
+      rows.forEach(([key, val], idx) => {
+        const ry = 90 + idx * rowH;
 
-    ctx.fillStyle = "#404040";
-    ctx.font = "9px 'JetBrains Mono', monospace";
-    const ts =
-      new Date().toISOString().replace("T", "  ").slice(0, 19) + " UTC";
-    ctx.fillText(ts, panelX + 20, H - 36);
+        if (idx % 2 === 0) {
+          ctx.fillStyle = "rgba(255,255,255,0.015)";
+          roundRect(ctx, panelX + 12, ry - 2, panelW - 24, rowH - 1, 3);
+          ctx.fill();
+        }
 
-    ctx.fillStyle = "#3b82f6";
-    ctx.font = "9px 'JetBrains Mono', monospace";
-    const url = "black-hole-visualizer.vercel.app";
-    const urlW = ctx.measureText(url).width;
-    ctx.fillText(url, panelX + panelW - 20 - urlW, H - 36);
+        ctx.fillStyle = "#808080";
+        ctx.font = "9px 'JetBrains Mono', monospace";
+        ctx.fillText(key.toUpperCase(), panelX + 20, ry + rowH * 0.55);
 
-    setPreviewReady(true);
+        ctx.fillStyle = "#e2e8f0";
+        ctx.font = "500 10px 'JetBrains Mono', monospace";
+        const valW = ctx.measureText(val).width;
+        ctx.fillText(val, panelX + panelW - 20 - valW, ry + rowH * 0.55);
+
+        ctx.strokeStyle = "#1e1e1e";
+        ctx.lineWidth = 1;
+        ctx.setLineDash([2, 3]);
+        const keyW = ctx.measureText(key.toUpperCase()).width;
+        ctx.beginPath();
+        ctx.moveTo(panelX + 24 + keyW + 4, ry + rowH * 0.5);
+        ctx.lineTo(panelX + panelW - 24 - valW - 4, ry + rowH * 0.5);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      });
+
+      ctx.fillStyle = "#2e2e2e";
+      ctx.fillRect(panelX + 12, H - 52, panelW - 24, 1);
+
+      ctx.fillStyle = "#404040";
+      ctx.font = "9px 'JetBrains Mono', monospace";
+      const ts =
+        new Date().toISOString().replace("T", "  ").slice(0, 19) + " UTC";
+      ctx.fillText(ts, panelX + 20, H - 36);
+
+      ctx.fillStyle = "#3b82f6";
+      ctx.font = "9px 'JetBrains Mono', monospace";
+      const url = "black-hole-visualizer.vercel.app";
+      const urlW = ctx.measureText(url).width;
+      ctx.fillText(url, panelX + panelW - 20 - urlW, H - 36);
+
+      console.log("Preview rendered successfully");
+      setPreviewReady(true);
+    } catch (e) {
+      console.error("Error rendering preview:", e);
+      setPreviewReady(true); // Still mark as ready so user can download or close
+    }
   }, [config, rows]);
 
   useEffect(() => {
     if (open) {
       setPreviewReady(false);
-      const t = setTimeout(drawPreview, 80);
+      // Give the canvas time to mount and be ready, then draw
+      const t = setTimeout(() => {
+        try {
+          drawPreview();
+        } catch (e) {
+          console.error("Failed to draw preview:", e);
+          setPreviewReady(true); // Still allow user to proceed
+        }
+      }, 150); // Increased timeout to 150ms
       return () => clearTimeout(t);
     }
   }, [open, drawPreview]);
 
   const handleDownload = () => {
     const canvas = previewRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.error("Canvas ref not available for download");
+      return;
+    }
     setDownloading(true);
 
-    const slug =
-      `blackhole_M${config.mass.toFixed(0)}_a${config.spin.toFixed(3)}`
-        .replace(/\./g, "p")
-        .replace(/[^a-zA-Z0-9_]/g, "");
+    try {
+      const slug =
+        `blackhole_M${config.mass.toFixed(0)}_a${config.spin.toFixed(3)}`
+          .replace(/\./g, "p")
+          .replace(/[^a-zA-Z0-9_]/g, "");
 
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${slug}.png`;
-        a.click();
-        URL.revokeObjectURL(url);
-        setDownloading(false);
-      },
-      "image/png",
-      1.0,
-    );
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            console.error("Failed to create blob from canvas");
+            setDownloading(false);
+            return;
+          }
+          try {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${slug}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+            console.log("PNG downloaded successfully");
+          } catch (e) {
+            console.error("Error downloading PNG:", e);
+          } finally {
+            setDownloading(false);
+          }
+        },
+        "image/png",
+        1.0,
+      );
+    } catch (e) {
+      console.error("Error in download handler:", e);
+      setDownloading(false);
+    }
   };
 
   if (!open) return null;
