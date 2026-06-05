@@ -42,3 +42,15 @@ export interface SimulationConfig extends BlackHoleConfig {
   id?: string;
   name?: string;
 }
+
+export interface ProbeConfig {
+  startR: number;   // starting radius in Schwarzschild-radius units
+  angle: number;    // velocity angle in degrees (0=radial-in, 90=tangential, 180=radial-out)
+  speed: number;    // initial speed as fraction of c
+}
+
+export type OrbitClassification =
+  | "pending"
+  | "stable_orbit"
+  | "escape"
+  | "capture";

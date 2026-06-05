@@ -4,9 +4,11 @@ import ControlPanel from "./components/ControlPanel";
 import InfoOverlay from "./components/InfoOverlay";
 import ShareModal from "./components/ShareModal";
 import CatalogPanel from "./components/CatalogPanel";
+import ProbeControls from "./components/ProbeControls";
+import SpacecraftOverlay from "./components/SpacecraftOverlay";
 import { useSimulationStore } from "./store/simulationStore";
 
-type Tab = "controls" | "catalog";
+type Tab = "controls" | "catalog" | "probe";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>("controls");
@@ -221,7 +223,7 @@ export default function App() {
               flexShrink: 0,
             }}
           >
-            {(["controls", "catalog"] as Tab[]).map((tab) => (
+            {(["controls", "catalog", "probe"] as Tab[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -248,14 +250,20 @@ export default function App() {
                   transition: "color 0.15s ease",
                 }}
               >
-                {tab}
+                {tab === "probe" ? "probe" : tab}
               </button>
             ))}
           </div>
 
           {/* Tab content */}
           <div style={{ flex: 1, overflow: "hidden" }}>
-            {activeTab === "controls" ? <ControlPanel /> : <CatalogPanel />}
+            {activeTab === "controls" ? (
+              <ControlPanel />
+            ) : activeTab === "probe" ? (
+              <ProbeControls />
+            ) : (
+              <CatalogPanel />
+            )}
           </div>
         </div>
 
@@ -284,6 +292,7 @@ export default function App() {
           }}
         >
           <BlackHoleCanvas />
+          {activeTab === "probe" && <SpacecraftOverlay />}
 
           {/* Desktop breadcrumb — top left */}
           <div
