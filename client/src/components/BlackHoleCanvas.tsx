@@ -29,10 +29,11 @@ export default function BlackHoleCanvas() {
     }
 
     const glOpts = { preserveDrawingBuffer: true, alpha: false };
-    const gl =
+    const gl = (
       canvas.getContext("webgl2", glOpts) ||
       canvas.getContext("webgl", glOpts) ||
-      (canvas.getContext("experimental-webgl", glOpts) as WebGLRenderingContext | null);
+      canvas.getContext("experimental-webgl", glOpts)
+    ) as WebGLRenderingContext | null;
     if (!gl) {
       console.error("WebGL not supported in this browser");
       return;
