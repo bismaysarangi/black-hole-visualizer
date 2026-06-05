@@ -210,6 +210,29 @@ export default function ControlPanel() {
     return m.toFixed(1);
   };
 
+  // Build readout rows only when analysis is available — avoids the .map crash
+  const readoutRows: [string, string][] = analysis
+    ? [
+        ["Schwarzschild Radius", `${schwarzschildRadius} km`],
+        ["Shadow Radius", `${analysis.lensing.shadow_radius.toFixed(2)} Rs`],
+        [
+          "Photon Sphere",
+          `${analysis.lensing.photon_sphere_radius.toFixed(2)} Rs`,
+        ],
+        ["Einstein Ring", `${analysis.lensing.einstein_radius.toFixed(2)} Rs`],
+        [
+          "Deflection Angle",
+          `${analysis.lensing.deflection_angle.toFixed(1)}°`,
+        ],
+        ["Time Factor", analysis.time_dilation.time_factor.toFixed(6)],
+        [
+          "Doppler (approach)",
+          `x${analysis.doppler.approaching_factor.toFixed(3)}`,
+        ],
+        ["Hawking Temp", `${hawkingTemp} K`],
+      ]
+    : [];
+
   return (
     <>
       <div
@@ -331,33 +354,10 @@ export default function ControlPanel() {
             />
           </Section>
 
-          {analysis && (
+          {/* Only render Physics Readout once analysis is available */}
+          {readoutRows.length > 0 && (
             <Section title="Physics Readout">
-              {[
-                ["Schwarzschild Radius", `${schwarzschildRadius} km`],
-                [
-                  "Shadow Radius",
-                  `${analysis.lensing.shadow_radius.toFixed(2)} Rs`,
-                ],
-                [
-                  "Photon Sphere",
-                  `${analysis.lensing.photon_sphere_radius.toFixed(2)} Rs`,
-                ],
-                [
-                  "Einstein Ring",
-                  `${analysis.lensing.einstein_radius.toFixed(2)} Rs`,
-                ],
-                [
-                  "Deflection Angle",
-                  `${analysis.lensing.deflection_angle.toFixed(1)}°`,
-                ],
-                ["Time Factor", analysis.time_dilation.time_factor.toFixed(6)],
-                [
-                  "Doppler (approach)",
-                  `x${analysis.doppler.approaching_factor.toFixed(3)}`,
-                ],
-                ["Hawking Temp", `${hawkingTemp} K`],
-              ].map(([k, v]) => (
+              {readoutRows.map(([k, v]) => (
                 <div
                   key={k}
                   style={{

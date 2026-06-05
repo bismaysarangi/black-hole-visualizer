@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { useSimulationStore } from "../store/simulationStore";
 import { physicsAPI } from "../api/client";
+import { computeLocalAnalysis } from "../utils/localphysics";
 import type { BlackHoleConfig } from "../types/blackhole";
 
 export function useBlackHole() {
@@ -14,7 +15,10 @@ export function useBlackHole() {
         const result = await physicsAPI.fullAnalysis(cfg);
         setAnalysis(result);
       } catch (err) {
-        console.error("Physics analysis failed:", err);
+        // API unavailable (405, network error, missing VITE_API_URL, etc.)
+        // Fall back to client-side physics so the visualizer still works.
+        console.warn("Physics API unavailable — using local fallback:", err);
+        setAnalysis(computeLocalAnalysis(cfg));
       } finally {
         setLoading(false);
       }
@@ -26,7 +30,7 @@ export function useBlackHole() {
   useEffect(() => {
     const debounce = setTimeout(() => {
       fetchAnalysis(config);
-    }, 400); // debounce 400ms so sliders don't spam the server
+    }, 400);
 
     return () => clearTimeout(debounce);
   }, [config, fetchAnalysis]);
@@ -39,7 +43,7 @@ export function useBlackHole() {
   );
 
   // Derived physics values for display
-  const schwarzschildRadius = config.mass * 2.95; // Rs in km (approx)
+  const schwarzschildRadius = config.mass * 2.95;
   const hawkingTemp =
     config.mass > 0 ? (1.227e23 / config.mass).toExponential(3) : "0";
 

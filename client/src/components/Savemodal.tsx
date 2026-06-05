@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useSimulationStore } from "../store/simulationStore";
+import { computeLocalAnalysis } from "../utils/localPhysics";
 
 interface SaveModalProps {
   open: boolean;
@@ -7,12 +8,14 @@ interface SaveModalProps {
 }
 
 export default function SaveModal({ open, onClose }: SaveModalProps) {
-  const { config, analysis } = useSimulationStore();
+  const { config, analysis: storeAnalysis } = useSimulationStore();
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [previewReady, setPreviewReady] = useState(false);
 
-  // Derived display values — same logic as ControlPanel
+  // Always have a valid analysis object — fall back to local computation
+  const analysis = storeAnalysis ?? computeLocalAnalysis(config);
+
   const schwarzschildRadius = (config.mass * 2.95).toFixed(2);
   const hawkingTemp =
     config.mass > 0 ? (1.227e23 / config.mass).toExponential(3) : "0";
@@ -30,32 +33,16 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     ["Inclination", `${config.inclination.toFixed(1)}°`],
     ["Schwarzschild Radius", `${schwarzschildRadius} km`],
     ["Hawking Temperature", `${hawkingTemp} K`],
-    ...(analysis
-      ? ([
-          ["Shadow Radius", `${analysis.lensing.shadow_radius.toFixed(3)} Rs`],
-          [
-            "Photon Sphere",
-            `${analysis.lensing.photon_sphere_radius.toFixed(3)} Rs`,
-          ],
-          [
-            "Einstein Ring",
-            `${analysis.lensing.einstein_radius.toFixed(3)} Rs`,
-          ],
-          [
-            "Deflection Angle",
-            `${analysis.lensing.deflection_angle.toFixed(2)}°`,
-          ],
-          ["Time Factor", analysis.time_dilation.time_factor.toFixed(6)],
-          [
-            "Doppler (approach)",
-            `×${analysis.doppler.approaching_factor.toFixed(4)}`,
-          ],
-          [
-            "Doppler (recede)",
-            `×${analysis.doppler.receding_factor.toFixed(4)}`,
-          ],
-        ] as [string, string][])
-      : []),
+    ["Shadow Radius", `${analysis.lensing.shadow_radius.toFixed(3)} Rs`],
+    ["Photon Sphere", `${analysis.lensing.photon_sphere_radius.toFixed(3)} Rs`],
+    ["Einstein Ring", `${analysis.lensing.einstein_radius.toFixed(3)} Rs`],
+    ["Deflection Angle", `${analysis.lensing.deflection_angle.toFixed(2)}°`],
+    ["Time Factor", analysis.time_dilation.time_factor.toFixed(6)],
+    [
+      "Doppler (approach)",
+      `×${analysis.doppler.approaching_factor.toFixed(4)}`,
+    ],
+    ["Doppler (recede)", `×${analysis.doppler.receding_factor.toFixed(4)}`],
     ["Time Dilation", config.time_dilation ? "Enabled" : "Disabled"],
     ["Hawking Radiation", config.hawking_on ? "Enabled" : "Disabled"],
   ];
@@ -76,7 +63,7 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     // Subtle star field
     ctx.fillStyle = "rgba(255,255,255,0.6)";
     const rng = (seed: number) => {
-      let x = Math.sin(seed) * 10000;
+      const x = Math.sin(seed) * 10000;
       return x - Math.floor(x);
     };
     for (let i = 0; i < 180; i++) {
@@ -111,7 +98,7 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
       ctx.fill();
     }
 
-    // Accretion disk — ellipse behind BH
+    // Accretion disk
     ctx.save();
     ctx.translate(cx, cy);
     ctx.scale(1, 0.28);
@@ -140,7 +127,7 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     }
     ctx.restore();
 
-    // Corona / photon sphere glow
+    // Corona glow
     const coronaGrad = ctx.createRadialGradient(
       cx,
       cy,
@@ -157,7 +144,7 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     ctx.arc(cx, cy, rs * 2.2, 0, Math.PI * 2);
     ctx.fill();
 
-    // Event horizon — pure black
+    // Event horizon
     const ehGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rs);
     ehGrad.addColorStop(0.7, "#000000");
     ehGrad.addColorStop(1, "rgba(0,0,0,0)");
@@ -170,7 +157,6 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     const panelX = W * 0.52;
     const panelW = W - panelX - 24;
 
-    // Panel background
     ctx.fillStyle = "rgba(17,17,17,0.92)";
     ctx.strokeStyle = "#222222";
     ctx.lineWidth = 1;
@@ -178,11 +164,9 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     ctx.fill();
     ctx.stroke();
 
-    // Header accent line
     ctx.fillStyle = "#3b82f6";
     ctx.fillRect(panelX + 16, 36, 3, 22);
 
-    // Title
     ctx.fillStyle = "#e2e8f0";
     ctx.font = "600 13px 'JetBrains Mono', monospace";
     ctx.fillText("BLACK HOLE VISUALIZER", panelX + 26, 52);
@@ -191,7 +175,6 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     ctx.font = "10px 'JetBrains Mono', monospace";
     ctx.fillText("SIMULATION READOUT", panelX + 26, 67);
 
-    // Divider
     ctx.strokeStyle = "#222222";
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -199,30 +182,25 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     ctx.lineTo(panelX + panelW - 16, 78);
     ctx.stroke();
 
-    // Data rows
     const rowH = (H - 40 - 90 - 40) / rows.length;
     rows.forEach(([key, val], idx) => {
       const ry = 90 + idx * rowH;
 
-      // Subtle alternating bg
       if (idx % 2 === 0) {
         ctx.fillStyle = "rgba(255,255,255,0.015)";
         roundRect(ctx, panelX + 12, ry - 2, panelW - 24, rowH - 1, 3);
         ctx.fill();
       }
 
-      // Key
       ctx.fillStyle = "#808080";
       ctx.font = "9px 'JetBrains Mono', monospace";
       ctx.fillText(key.toUpperCase(), panelX + 20, ry + rowH * 0.55);
 
-      // Value — right-aligned
       ctx.fillStyle = "#e2e8f0";
       ctx.font = "500 10px 'JetBrains Mono', monospace";
       const valW = ctx.measureText(val).width;
       ctx.fillText(val, panelX + panelW - 20 - valW, ry + rowH * 0.55);
 
-      // Dotted connector
       ctx.strokeStyle = "#1e1e1e";
       ctx.lineWidth = 1;
       ctx.setLineDash([2, 3]);
@@ -234,7 +212,6 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
       ctx.setLineDash([]);
     });
 
-    // Footer
     ctx.fillStyle = "#2e2e2e";
     ctx.fillRect(panelX + 12, H - 52, panelW - 24, 1);
 
@@ -251,12 +228,11 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     ctx.fillText(url, panelX + panelW - 20 - urlW, H - 36);
 
     setPreviewReady(true);
-  }, [config, analysis, rows]);
+  }, [config, rows]);
 
   useEffect(() => {
     if (open) {
       setPreviewReady(false);
-      // give modal time to mount
       const t = setTimeout(drawPreview, 80);
       return () => clearTimeout(t);
     }
@@ -445,7 +421,6 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
   );
 }
 
-// ── Utility: rounded rect path ────────────────────────────────────────────────
 function roundRect(
   ctx: CanvasRenderingContext2D,
   x: number,
