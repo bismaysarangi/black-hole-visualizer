@@ -13,6 +13,7 @@ interface SliderProps {
   step: number;
   unit?: string;
   display?: string;
+  defaultValue?: number;
   onChange: (v: number) => void;
 }
 
@@ -324,6 +325,7 @@ export default function ControlPanel() {
               label="Accretion Rate"
               value={config.accretion_rate}
               min={0}
+              defaultValue={0.2}
               max={1}
               step={0.01}
               onChange={(v) => updateConfig({ accretion_rate: v })}
