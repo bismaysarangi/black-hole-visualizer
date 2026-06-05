@@ -119,7 +119,7 @@ function derivatives(
   //
   // Using the standard form with E, L approach:
 
-  const L2 = (r2 * dphi) * (r2 * dphi) / (r2); // L = r² dφ/dτ → L² = r²(dφ/dτ)²  — no, L = r²dφ/dτ
+  // const L2 = (r2 * dphi) * (r2 * dphi) / (r2); // L = r² dφ/dτ → L² = r²(dφ/dτ)²  — no, L = r²dφ/dτ
   // Actually let's directly use Christoffel symbol form:
   // d²r/dτ² = -(M/r²)(1-2M/r)(dt/dτ)² + (M/r²)/(1-2M/r) (dr/dτ)² + r(1-2M/r)(dφ/dτ)²
   // With Rs=1, M = 1/2:
