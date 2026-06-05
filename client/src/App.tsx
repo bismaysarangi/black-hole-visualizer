@@ -21,6 +21,10 @@ export default function App() {
         display: "flex",
         flexDirection: "column",
         background: "var(--bg-base)",
+        backgroundImage: "url(/starmap.png)",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         overflow: "hidden",
       }}
     >
@@ -32,7 +36,8 @@ export default function App() {
           justifyContent: "space-between",
           padding: "10px 14px",
           borderBottom: "1px solid var(--border)",
-          background: "var(--bg-surface)",
+          background: "rgba(17, 17, 17, 0.85)",
+          backdropFilter: "blur(12px)",
           flexShrink: 0,
           zIndex: 50,
         }}
@@ -155,7 +160,8 @@ export default function App() {
             height: "100%",
             display: "flex",
             flexDirection: "column",
-            background: "var(--bg-surface)",
+            background: "rgba(17, 17, 17, 0.82)",
+            backdropFilter: "blur(16px)",
             borderRight: "1px solid var(--border)",
             flexShrink: 0,
             zIndex: 40,
@@ -275,10 +281,6 @@ export default function App() {
             position: "relative",
             overflow: "hidden",
             minWidth: 0,
-            backgroundImage: "url(/starmap.png)",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
           }}
         >
           <BlackHoleCanvas />

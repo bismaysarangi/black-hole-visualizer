@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useCallback, useMemo } from "react";
 import { useSimulationStore } from "../store/simulationStore";
 import { computeLocalAnalysis } from "../utils/localphysics";
 
@@ -42,7 +42,7 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     return `${m.toFixed(2)} M☉`;
   };
 
-  const rows: [string, string][] = [
+  const rows: [string, string][] = useMemo(() => [
     ["Mass", formatMass(config.mass)],
     ["Spin (a)", config.spin.toFixed(4)],
     ["Accretion Rate", `${(config.accretion_rate * 100).toFixed(0)}%`],
@@ -61,7 +61,7 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
     ["Doppler (recede)", `×${analysis.doppler.receding_factor.toFixed(4)}`],
     ["Time Dilation", config.time_dilation ? "Enabled" : "Disabled"],
     ["Hawking Radiation", config.hawking_on ? "Enabled" : "Disabled"],
-  ];
+  ], [config, analysis, schwarzschildRadius, hawkingTemp]);
 
   const drawPreview = useCallback(() => {
     const canvas = previewRef.current;
@@ -273,15 +273,23 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
   useEffect(() => {
     if (open) {
       setPreviewReady(false);
-      // Give the canvas time to mount and be ready, then draw
-      const t = setTimeout(() => {
+
+      const tryDraw = () => {
+        // Wait for starmap to be loaded if it exists but isn't ready yet
+        if (starmapRef.current && !starmapRef.current.complete) {
+          const waitForLoad = setTimeout(tryDraw, 100);
+          return () => clearTimeout(waitForLoad);
+        }
         try {
           drawPreview();
         } catch (e) {
           console.error("Failed to draw preview:", e);
-          setPreviewReady(true); // Still allow user to proceed
+          setPreviewReady(true);
         }
-      }, 150); // Increased timeout to 150ms
+      };
+
+      // Give the canvas time to mount, then try drawing
+      const t = setTimeout(tryDraw, 200);
       return () => clearTimeout(t);
     }
   }, [open, drawPreview]);
@@ -312,8 +320,14 @@ export default function SaveModal({ open, onClose }: SaveModalProps) {
             const a = document.createElement("a");
             a.href = url;
             a.download = `${slug}.png`;
+            a.style.display = "none";
+            document.body.appendChild(a);
             a.click();
-            URL.revokeObjectURL(url);
+            // Clean up after a short delay to ensure download starts
+            setTimeout(() => {
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }, 100);
             console.log("PNG downloaded successfully");
           } catch (e) {
             console.error("Error downloading PNG:", e);
