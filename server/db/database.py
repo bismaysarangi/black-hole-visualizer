@@ -4,10 +4,10 @@ import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./blackhole.db")
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} 
-)
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+engine = create_engine(DATABASE_URL)  
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -15,8 +15,8 @@ class Base(DeclarativeBase):
     pass
 
 def init_db():
-    from db.schema import Simulation, ShareToken  # import here to register models
-    Base.metadata.create_all(bind=engine)        # this creates blackhole.db
+    from db.schema import Simulation, ShareToken
+    Base.metadata.create_all(bind=engine)
 
 def get_db():
     db = SessionLocal()
