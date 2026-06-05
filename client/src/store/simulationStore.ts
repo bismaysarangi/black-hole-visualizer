@@ -21,9 +21,9 @@ interface SimulationStore {
 
 export const useSimulationStore = create<SimulationStore>((set) => ({
   config: {
-    mass: 10.0,
+    mass: 50.0,
     spin: 0.5,
-    accretion_rate: 0.5,
+    accretion_rate: 0.2,
     inclination: 30.0,
     hawking_on: false,
     time_dilation: true,

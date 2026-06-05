@@ -21,7 +21,7 @@ export default function App() {
         display: "flex",
         flexDirection: "column",
         background: "var(--bg-base)",
-        backgroundImage: "url(/starmap.png)",
+        backgroundImage: "linear-gradient(rgba(5, 5, 10, 0.55), rgba(5, 5, 10, 0.55)), url(/starmap.png)",
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
