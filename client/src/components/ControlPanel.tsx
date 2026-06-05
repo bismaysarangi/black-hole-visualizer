@@ -224,45 +224,50 @@ export default function ControlPanel() {
           padding: "16px",
           borderBottom: "1px solid var(--border)",
           flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            marginBottom: "2px",
-          }}
-        >
+        <div>
           <div
             style={{
-              width: "6px",
-              height: "6px",
-              borderRadius: "50%",
-              background: isLoading ? "var(--warning)" : "var(--success)",
-              boxShadow: isLoading
-                ? "0 0 6px var(--warning)"
-                : "0 0 6px var(--success)",
-            }}
-          />
-          <span
-            style={{
-              color: "var(--text-primary)",
-              fontWeight: 500,
-              fontSize: "13px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "2px",
             }}
           >
-            Black Hole Visualizer
-          </span>
-        </div>
-        <div
-          style={{
-            color: "var(--text-muted)",
-            fontSize: "10px",
-            paddingLeft: "14px",
-          }}
-        >
-          {isLoading ? "Computing physics..." : "Simulation active"}
+            <div
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: isLoading ? "var(--warning)" : "var(--success)",
+                boxShadow: isLoading
+                  ? "0 0 6px var(--warning)"
+                  : "0 0 6px var(--success)",
+              }}
+            />
+            <span
+              style={{
+                color: "var(--text-primary)",
+                fontWeight: 500,
+                fontSize: "13px",
+              }}
+            >
+              Controls
+            </span>
+          </div>
+          <div
+            style={{
+              color: "var(--text-muted)",
+              fontSize: "10px",
+              paddingLeft: "14px",
+            }}
+          >
+            {isLoading ? "Computing physics..." : "Simulation active"}
+          </div>
         </div>
       </div>
 

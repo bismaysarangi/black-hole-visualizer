@@ -2,33 +2,31 @@ import { useSimulationStore } from "../store/simulationStore";
 
 export default function InfoOverlay() {
   const { config, analysis, isLoading } = useSimulationStore();
-
   if (!analysis) return null;
 
   const timeFactor = analysis.time_dilation.time_factor;
   const nearRate = (timeFactor * 100).toFixed(2);
-  const farRate = "100.00";
 
   return (
     <div
       style={{
         position: "absolute",
-        bottom: "20px",
-        right: "20px",
+        bottom: "12px",
+        right: "12px",
         display: "flex",
         flexDirection: "column",
-        gap: "8px",
+        gap: "6px",
         pointerEvents: "none",
+        maxWidth: "calc(100vw - 24px)",
       }}
     >
-      {/* Time dilation clocks */}
       {config.time_dilation && (
         <div
           style={{
-            background: "rgba(10,10,10,0.85)",
+            background: "rgba(10,10,10,0.88)",
             border: "1px solid var(--border)",
             borderRadius: "var(--radius)",
-            padding: "10px 14px",
+            padding: "8px 12px",
             backdropFilter: "blur(8px)",
           }}
         >
@@ -38,22 +36,22 @@ export default function InfoOverlay() {
               fontSize: "9px",
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              marginBottom: "8px",
+              marginBottom: "6px",
             }}
           >
             Time Dilation
           </div>
-          <div style={{ display: "flex", gap: "16px" }}>
+          <div style={{ display: "flex", gap: "14px" }}>
             {[
-              { label: "Near horizon", rate: nearRate, dim: true },
-              { label: "Far observer", rate: farRate, dim: false },
-            ].map(({ label, rate, dim }) => (
+              { label: "Near horizon", rate: nearRate, accent: true },
+              { label: "Far observer", rate: "100.00", accent: false },
+            ].map(({ label, rate, accent }) => (
               <div key={label}>
                 <div
                   style={{
                     color: "var(--text-muted)",
                     fontSize: "9px",
-                    marginBottom: "3px",
+                    marginBottom: "2px",
                   }}
                 >
                   {label}
@@ -61,8 +59,8 @@ export default function InfoOverlay() {
                 <div
                   style={{
                     fontFamily: "var(--font-mono)",
-                    fontSize: "16px",
-                    color: dim ? "var(--accent)" : "var(--text-primary)",
+                    fontSize: "14px",
+                    color: accent ? "var(--accent)" : "var(--text-primary)",
                     letterSpacing: "-0.02em",
                   }}
                 >
@@ -74,17 +72,17 @@ export default function InfoOverlay() {
         </div>
       )}
 
-      {/* Status */}
+      {/* Status pill */}
       <div
         style={{
-          background: "rgba(10,10,10,0.85)",
+          background: "rgba(10,10,10,0.88)",
           border: "1px solid var(--border)",
           borderRadius: "var(--radius)",
-          padding: "8px 14px",
+          padding: "6px 12px",
           backdropFilter: "blur(8px)",
           display: "flex",
           alignItems: "center",
-          gap: "8px",
+          gap: "7px",
         }}
       >
         <div
@@ -92,6 +90,7 @@ export default function InfoOverlay() {
             width: "5px",
             height: "5px",
             borderRadius: "50%",
+            flexShrink: 0,
             background: isLoading ? "var(--warning)" : "var(--accent)",
             boxShadow: isLoading
               ? "0 0 5px var(--warning)"
@@ -103,6 +102,9 @@ export default function InfoOverlay() {
             color: "var(--text-muted)",
             fontSize: "10px",
             fontFamily: "var(--font-mono)",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {isLoading
