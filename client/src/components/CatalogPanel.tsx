@@ -1,8 +1,14 @@
 import { useNASAData } from "../hooks/useNASAData";
 
 export default function CatalogPanel() {
-  const { catalog, isLoading, loadBlackHole, formatMass, formatDistance } =
-    useNASAData();
+  const {
+    catalog,
+    isLoading,
+    error,
+    loadBlackHole,
+    formatMass,
+    formatDistance,
+  } = useNASAData();
 
   const typeColor = (type: string) => {
     if (type === "supermassive") return "var(--accent)";
@@ -29,6 +35,27 @@ export default function CatalogPanel() {
       {isLoading && (
         <div style={{ color: "var(--text-muted)", fontSize: "11px" }}>
           Loading catalog...
+        </div>
+      )}
+
+      {error && (
+        <div
+          style={{
+            color: "var(--danger)",
+            fontSize: "11px",
+            padding: "10px",
+            background: "rgba(239,68,68,0.08)",
+            borderRadius: "var(--radius)",
+            border: "1px solid rgba(239,68,68,0.2)",
+            marginBottom: "10px",
+          }}
+        >
+          <div style={{ fontWeight: 500, marginBottom: "4px" }}>
+            Failed to load catalog
+          </div>
+          <div style={{ color: "var(--text-muted)", fontSize: "10px" }}>
+            {error}
+          </div>
         </div>
       )}
 

@@ -269,7 +269,14 @@ export default function App() {
         )}
 
         {/* ── Canvas ─────────────────────────────────────────────── */}
-        <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+        <div
+          style={{
+            flex: 1,
+            position: "relative",
+            overflow: "hidden",
+            minWidth: 0,
+          }}
+        >
           <BlackHoleCanvas />
 
           {/* Desktop breadcrumb — top left */}
@@ -287,6 +294,7 @@ export default function App() {
               background:
                 "linear-gradient(to bottom, rgba(10,10,10,0.8), transparent)",
               pointerEvents: "none",
+              zIndex: 5,
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -400,6 +408,18 @@ export default function App() {
           .backdrop {
             display: block !important;
             top: 52px !important;
+          }
+
+          /* Push overlay above mobile browser chrome */
+          .info-overlay {
+            bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+            left: 8px !important;
+            right: 8px !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            justify-content: flex-end !important;
+            align-items: flex-end !important;
+            gap: 6px !important;
           }
         }
 

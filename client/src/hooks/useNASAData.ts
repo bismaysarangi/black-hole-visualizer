@@ -11,22 +11,24 @@ export function useNASAData() {
   const { setConfig } = useSimulationStore();
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchCatalog = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const data = await nasaAPI.catalog();
         setCatalog(data);
-      } catch (err) {
-        setError("Failed to load NASA catalog");
-        console.error(err);
+      } catch (err: unknown) {
+        const message =
+          err instanceof Error ? err.message : "Failed to load NASA catalog";
+        setError(message);
+        console.error("NASA catalog fetch failed:", err);
       } finally {
         setIsLoading(false);
       }
     };
-    fetch();
+    fetchCatalog();
   }, []);
 
-  // Load a real black hole into the simulator
   const loadBlackHole = (entry: BlackHoleEntry) => {
     setConfig({
       mass: Math.min(entry.mass_solar, 1e10),

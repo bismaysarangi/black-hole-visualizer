@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { useBlackHole } from "../hooks/useBlackHole";
 import { useSimulation } from "../hooks/useSimulation";
 import { useSimulationStore } from "../store/simulationStore";
+import SaveModal from "./Savemodal";
 
 // ─── Slider ───────────────────────────────────────────────────────────────────
 interface SliderProps {
@@ -195,9 +197,11 @@ function Section({
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ControlPanel() {
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+
   const { config, updateConfig, schwarzschildRadius, hawkingTemp, isLoading } =
     useBlackHole();
-  const { saveSimulation, shareSimulation, isSaving } = useSimulation();
+  const { shareSimulation } = useSimulation();
   const { analysis } = useSimulationStore();
 
   const formatMass = (m: number) => {
@@ -207,223 +211,228 @@ export default function ControlPanel() {
   };
 
   return (
-    <div
-      style={{
-        width: "260px",
-        height: "100%",
-        background: "var(--bg-surface)",
-        borderRight: "1px solid var(--border)",
-        display: "flex",
-        flexDirection: "column",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
+    <>
       <div
         style={{
-          padding: "16px",
-          borderBottom: "1px solid var(--border)",
-          flexShrink: 0,
+          width: "260px",
+          height: "100%",
+          background: "var(--bg-surface)",
+          borderRight: "1px solid var(--border)",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
+          flexDirection: "column",
+          overflow: "hidden",
         }}
       >
-        <div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "2px",
-            }}
-          >
+        {/* Header */}
+        <div
+          style={{
+            padding: "16px",
+            borderBottom: "1px solid var(--border)",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div>
             <div
               style={{
-                width: "6px",
-                height: "6px",
-                borderRadius: "50%",
-                background: isLoading ? "var(--warning)" : "var(--success)",
-                boxShadow: isLoading
-                  ? "0 0 6px var(--warning)"
-                  : "0 0 6px var(--success)",
-              }}
-            />
-            <span
-              style={{
-                color: "var(--text-primary)",
-                fontWeight: 500,
-                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "2px",
               }}
             >
-              Controls
-            </span>
+              <div
+                style={{
+                  width: "6px",
+                  height: "6px",
+                  borderRadius: "50%",
+                  background: isLoading ? "var(--warning)" : "var(--success)",
+                  boxShadow: isLoading
+                    ? "0 0 6px var(--warning)"
+                    : "0 0 6px var(--success)",
+                }}
+              />
+              <span
+                style={{
+                  color: "var(--text-primary)",
+                  fontWeight: 500,
+                  fontSize: "13px",
+                }}
+              >
+                Controls
+              </span>
+            </div>
+            <div
+              style={{
+                color: "var(--text-muted)",
+                fontSize: "10px",
+                paddingLeft: "14px",
+              }}
+            >
+              {isLoading ? "Computing physics..." : "Simulation active"}
+            </div>
           </div>
-          <div
+        </div>
+
+        {/* Scrollable controls */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
+          <Section title="Black Hole">
+            <Slider
+              label="Mass"
+              value={config.mass}
+              min={0.1}
+              max={1e7}
+              step={0.1}
+              display={formatMass(config.mass)}
+              unit=" M☉"
+              onChange={(v) => updateConfig({ mass: v })}
+            />
+            <Slider
+              label="Spin"
+              value={config.spin}
+              min={0}
+              max={0.999}
+              step={0.001}
+              onChange={(v) => updateConfig({ spin: v })}
+            />
+            <Slider
+              label="Accretion Rate"
+              value={config.accretion_rate}
+              min={0}
+              max={1}
+              step={0.01}
+              onChange={(v) => updateConfig({ accretion_rate: v })}
+            />
+            <Slider
+              label="Inclination"
+              value={config.inclination}
+              min={0}
+              max={90}
+              step={0.5}
+              unit="°"
+              onChange={(v) => updateConfig({ inclination: v })}
+            />
+          </Section>
+
+          <Section title="Effects">
+            <Toggle
+              label="Time Dilation"
+              value={config.time_dilation}
+              hint="Show relativistic clock overlay"
+              onChange={(v) => updateConfig({ time_dilation: v })}
+            />
+            <Toggle
+              label="Hawking Radiation"
+              value={config.hawking_on}
+              hint="Visualize quantum evaporation"
+              onChange={(v) => updateConfig({ hawking_on: v })}
+            />
+          </Section>
+
+          {analysis && (
+            <Section title="Physics Readout">
+              {[
+                ["Schwarzschild Radius", `${schwarzschildRadius} km`],
+                [
+                  "Shadow Radius",
+                  `${analysis.lensing.shadow_radius.toFixed(2)} Rs`,
+                ],
+                [
+                  "Photon Sphere",
+                  `${analysis.lensing.photon_sphere_radius.toFixed(2)} Rs`,
+                ],
+                [
+                  "Einstein Ring",
+                  `${analysis.lensing.einstein_radius.toFixed(2)} Rs`,
+                ],
+                [
+                  "Deflection Angle",
+                  `${analysis.lensing.deflection_angle.toFixed(1)}°`,
+                ],
+                ["Time Factor", analysis.time_dilation.time_factor.toFixed(6)],
+                [
+                  "Doppler (approach)",
+                  `x${analysis.doppler.approaching_factor.toFixed(3)}`,
+                ],
+                ["Hawking Temp", `${hawkingTemp} K`],
+              ].map(([k, v]) => (
+                <div
+                  key={k}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "baseline",
+                  }}
+                >
+                  <span
+                    style={{ color: "var(--text-muted)", fontSize: "10px" }}
+                  >
+                    {k}
+                  </span>
+                  <span
+                    style={{
+                      color: "var(--text-primary)",
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "10px",
+                    }}
+                  >
+                    {v}
+                  </span>
+                </div>
+              ))}
+            </Section>
+          )}
+        </div>
+
+        {/* Footer actions */}
+        <div
+          style={{
+            padding: "12px 16px",
+            borderTop: "1px solid var(--border)",
+            display: "flex",
+            gap: "8px",
+            flexShrink: 0,
+          }}
+        >
+          <button
+            onClick={() => setSaveModalOpen(true)}
             style={{
-              color: "var(--text-muted)",
-              fontSize: "10px",
-              paddingLeft: "14px",
+              flex: 1,
+              padding: "7px 0",
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-strong)",
+              borderRadius: "var(--radius)",
+              color: "var(--text-secondary)",
+              fontSize: "11px",
+              cursor: "pointer",
+              letterSpacing: "0.03em",
             }}
           >
-            {isLoading ? "Computing physics..." : "Simulation active"}
-          </div>
+            Save PNG
+          </button>
+          <button
+            onClick={() => shareSimulation()}
+            style={{
+              flex: 1,
+              padding: "7px 0",
+              background: "var(--accent)",
+              border: "none",
+              borderRadius: "var(--radius)",
+              color: "#fff",
+              fontSize: "11px",
+              cursor: "pointer",
+              letterSpacing: "0.03em",
+              fontWeight: 500,
+            }}
+          >
+            Share
+          </button>
         </div>
       </div>
 
-      {/* Scrollable controls */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "16px" }}>
-        <Section title="Black Hole">
-          <Slider
-            label="Mass"
-            value={config.mass}
-            min={0.1}
-            max={1e7}
-            step={0.1}
-            display={formatMass(config.mass)}
-            unit=" M☉"
-            onChange={(v) => updateConfig({ mass: v })}
-          />
-          <Slider
-            label="Spin"
-            value={config.spin}
-            min={0}
-            max={0.999}
-            step={0.001}
-            onChange={(v) => updateConfig({ spin: v })}
-          />
-          <Slider
-            label="Accretion Rate"
-            value={config.accretion_rate}
-            min={0}
-            max={1}
-            step={0.01}
-            onChange={(v) => updateConfig({ accretion_rate: v })}
-          />
-          <Slider
-            label="Inclination"
-            value={config.inclination}
-            min={0}
-            max={90}
-            step={0.5}
-            unit="°"
-            onChange={(v) => updateConfig({ inclination: v })}
-          />
-        </Section>
-
-        <Section title="Effects">
-          <Toggle
-            label="Time Dilation"
-            value={config.time_dilation}
-            hint="Show relativistic clock overlay"
-            onChange={(v) => updateConfig({ time_dilation: v })}
-          />
-          <Toggle
-            label="Hawking Radiation"
-            value={config.hawking_on}
-            hint="Visualize quantum evaporation"
-            onChange={(v) => updateConfig({ hawking_on: v })}
-          />
-        </Section>
-
-        {analysis && (
-          <Section title="Physics Readout">
-            {[
-              ["Schwarzschild Radius", `${schwarzschildRadius} km`],
-              [
-                "Shadow Radius",
-                `${analysis.lensing.shadow_radius.toFixed(2)} Rs`,
-              ],
-              [
-                "Photon Sphere",
-                `${analysis.lensing.photon_sphere_radius.toFixed(2)} Rs`,
-              ],
-              [
-                "Einstein Ring",
-                `${analysis.lensing.einstein_radius.toFixed(2)} Rs`,
-              ],
-              [
-                "Deflection Angle",
-                `${analysis.lensing.deflection_angle.toFixed(1)}°`,
-              ],
-              ["Time Factor", analysis.time_dilation.time_factor.toFixed(6)],
-              [
-                "Doppler (approach)",
-                `x${analysis.doppler.approaching_factor.toFixed(3)}`,
-              ],
-              ["Hawking Temp", `${hawkingTemp} K`],
-            ].map(([k, v]) => (
-              <div
-                key={k}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "baseline",
-                }}
-              >
-                <span style={{ color: "var(--text-muted)", fontSize: "10px" }}>
-                  {k}
-                </span>
-                <span
-                  style={{
-                    color: "var(--text-primary)",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "10px",
-                  }}
-                >
-                  {v}
-                </span>
-              </div>
-            ))}
-          </Section>
-        )}
-      </div>
-
-      {/* Footer actions */}
-      <div
-        style={{
-          padding: "12px 16px",
-          borderTop: "1px solid var(--border)",
-          display: "flex",
-          gap: "8px",
-          flexShrink: 0,
-        }}
-      >
-        <button
-          onClick={() => saveSimulation()}
-          disabled={isSaving}
-          style={{
-            flex: 1,
-            padding: "7px 0",
-            background: "var(--bg-elevated)",
-            border: "1px solid var(--border-strong)",
-            borderRadius: "var(--radius)",
-            color: "var(--text-secondary)",
-            fontSize: "11px",
-            cursor: "pointer",
-            letterSpacing: "0.03em",
-          }}
-        >
-          {isSaving ? "Saving..." : "Save"}
-        </button>
-        <button
-          onClick={() => shareSimulation()}
-          style={{
-            flex: 1,
-            padding: "7px 0",
-            background: "var(--accent)",
-            border: "none",
-            borderRadius: "var(--radius)",
-            color: "#fff",
-            fontSize: "11px",
-            cursor: "pointer",
-            letterSpacing: "0.03em",
-            fontWeight: 500,
-          }}
-        >
-          Share
-        </button>
-      </div>
-    </div>
+      <SaveModal open={saveModalOpen} onClose={() => setSaveModalOpen(false)} />
+    </>
   );
 }

@@ -4,7 +4,6 @@ from typing import Optional
 
 NASA_API_KEY = os.getenv("NASA_API_KEY", "DEMO_KEY")
 
-# Real black hole data — hardcoded from published astronomical measurements
 BLACK_HOLE_CATALOG = [
     {
         "name": "Sagittarius A*",
@@ -69,14 +68,12 @@ BLACK_HOLE_CATALOG = [
 ]
 
 async def get_black_hole_catalog() -> dict:
-    """Return the full black hole catalog."""
     return {
         "count": len(BLACK_HOLE_CATALOG),
         "black_holes": BLACK_HOLE_CATALOG,
     }
 
 async def get_black_hole_by_name(name: str) -> Optional[dict]:
-    """Find a black hole by slug or name (case insensitive)."""
     name_lower = name.lower().replace(" ", "-")
     for bh in BLACK_HOLE_CATALOG:
         if bh["slug"] == name_lower or bh["name"].lower() == name.lower():
@@ -84,15 +81,13 @@ async def get_black_hole_by_name(name: str) -> Optional[dict]:
     return None
 
 async def get_apod() -> dict:
-    """Fetch NASA Astronomy Picture of the Day."""
     url = f"https://api.nasa.gov/planetary/apod?api_key={NASA_API_KEY}"
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = client.get(url)
+            response = await client.get(url)   # fix: was missing await
             response.raise_for_status()
             return response.json()
     except Exception as e:
-        # Fallback if NASA API is unreachable
         return {
             "title": "NASA APOD Unavailable",
             "explanation": str(e),
