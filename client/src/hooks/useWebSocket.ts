@@ -2,7 +2,8 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import { useSimulationStore } from "../store/simulationStore";
 import type { RayPath } from "../types/blackhole";
 
-const WS_URL = "ws://localhost:8000/ws/raystream";
+const WS_URL =
+  import.meta.env.VITE_WS_URL || "ws://localhost:8000/ws/raystream";
 
 export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);

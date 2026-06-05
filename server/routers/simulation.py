@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.database import get_db
@@ -64,10 +66,10 @@ def create_share_token(simulation_id: str, db: Session = Depends(get_db)):
     db.refresh(token)
 
     return ShareTokenResponse(
-        token         = token.token,
-        simulation_id = simulation_id,
-        share_url     = f"http://localhost:5173/share/{token.token}",
-    )
+    token         = token.token,
+    simulation_id = simulation_id,
+    share_url     = f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/share/{token.token}",
+)
 
 @router.get("/share/{token}", response_model=SimulationResponse)
 def load_by_share_token(token: str, db: Session = Depends(get_db)):
