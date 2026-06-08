@@ -2,7 +2,7 @@
 
 An interactive, physically-grounded black hole simulation built with React, WebGL, and a FastAPI physics backend. Explore gravitational lensing, accretion disk dynamics, relativistic time dilation, spacecraft geodesics, and spaghettification — all in real time.
 
-![Black Hole Visualizer](https://img.shields.io/badge/status-active-brightgreen) ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript) ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi) ![WebGL](https://img.shields.io/badge/WebGL-2.0-990000?logo=webgl)
+Live Link: https://black-hole-visualizer.vercel.app/
 
 ---
 
