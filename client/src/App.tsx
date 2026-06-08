@@ -6,6 +6,8 @@ import ShareModal from "./components/ShareModal";
 import CatalogPanel from "./components/CatalogPanel";
 import ProbeControls from "./components/ProbeControls";
 import SpacecraftOverlay from "./components/SpacecraftOverlay";
+import TimeDilationClock from "./components/TimeDilationClock";
+import SpaghettificationOverlay from "./components/SpaghettificationOverlay";
 import { useSimulationStore } from "./store/simulationStore";
 
 type Tab = "controls" | "catalog" | "probe";
@@ -13,7 +15,7 @@ type Tab = "controls" | "catalog" | "probe";
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>("controls");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { isLoading } = useSimulationStore();
+  const { isLoading, spaghettifyActive, spaghettifyDone, showTimeClock, setShowTimeClock } = useSimulationStore();
 
   return (
     <div
@@ -293,6 +295,10 @@ export default function App() {
         >
           <BlackHoleCanvas />
           {activeTab === "probe" && <SpacecraftOverlay />}
+          {activeTab === "probe" && (spaghettifyActive || spaghettifyDone) && <SpaghettificationOverlay />}
+
+          {/* Time Dilation Clock overlay — always available */}
+          <TimeDilationClock />
 
           {/* Desktop breadcrumb — top left */}
           <div
@@ -351,29 +357,65 @@ export default function App() {
                 ),
               )}
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <div
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              {/* Clock toggle button */}
+              <button
+                onClick={() => setShowTimeClock(!showTimeClock)}
                 style={{
-                  width: "5px",
-                  height: "5px",
-                  borderRadius: "50%",
-                  background: isLoading ? "var(--warning)" : "var(--accent)",
-                  boxShadow: isLoading
-                    ? "0 0 6px var(--warning)"
-                    : "0 0 6px var(--accent)",
-                  animation: "pulse 2s ease-in-out infinite",
-                }}
-              />
-              <span
-                style={{
-                  color: "var(--text-muted)",
-                  fontSize: "9px",
-                  fontFamily: "var(--font-mono)",
-                  letterSpacing: "0.05em",
+                  background: showTimeClock ? "rgba(0,229,255,0.12)" : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${showTimeClock ? "rgba(0,229,255,0.3)" : "rgba(255,255,255,0.1)"}`,
+                  borderRadius: "4px",
+                  padding: "3px 8px",
+                  cursor: "pointer",
+                  pointerEvents: "auto",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  transition: "all 0.2s ease",
                 }}
               >
-                {isLoading ? "COMPUTING" : "LIVE"}
-              </span>
+                <svg width="10" height="10" viewBox="0 0 10 10">
+                  <circle cx="5" cy="5" r="4" fill="none" stroke={showTimeClock ? "#00e5ff" : "rgba(255,255,255,0.3)"} strokeWidth="0.8" />
+                  <line x1="5" y1="5" x2="5" y2="2.5" stroke={showTimeClock ? "#00e5ff" : "rgba(255,255,255,0.3)"} strokeWidth="0.8" strokeLinecap="round" />
+                  <line x1="5" y1="5" x2="7" y2="5.5" stroke={showTimeClock ? "#00e5ff" : "rgba(255,255,255,0.3)"} strokeWidth="0.6" strokeLinecap="round" />
+                </svg>
+                <span
+                  style={{
+                    color: showTimeClock ? "#00e5ff" : "rgba(255,255,255,0.35)",
+                    fontSize: "8px",
+                    fontFamily: "var(--font-mono)",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  CLOCK
+                </span>
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <div
+                  style={{
+                    width: "5px",
+                    height: "5px",
+                    borderRadius: "50%",
+                    background: isLoading ? "var(--warning)" : "var(--accent)",
+                    boxShadow: isLoading
+                      ? "0 0 6px var(--warning)"
+                      : "0 0 6px var(--accent)",
+                    animation: "pulse 2s ease-in-out infinite",
+                  }}
+                />
+                <span
+                  style={{
+                    color: "var(--text-muted)",
+                    fontSize: "9px",
+                    fontFamily: "var(--font-mono)",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  {isLoading ? "COMPUTING" : "LIVE"}
+                </span>
+              </div>
             </div>
           </div>
 

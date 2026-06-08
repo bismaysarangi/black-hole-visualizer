@@ -21,6 +21,13 @@ interface SimulationStore {
   probeTrail: [number, number][];
   probeClassification: OrbitClassification | null;
 
+  // Spaghettification state
+  spaghettifyActive: boolean;
+  spaghettifyDone: boolean;
+
+  // Time dilation clock
+  showTimeClock: boolean;
+
   setConfig: (patch: Partial<BlackHoleConfig>) => void;
   setAnalysis: (a: FullAnalysis) => void;
   setLoading: (v: boolean) => void;
@@ -35,6 +42,14 @@ interface SimulationStore {
   appendProbePoint: (pt: [number, number]) => void;
   setProbeClassification: (c: OrbitClassification) => void;
   resetProbe: () => void;
+
+  // Spaghettification actions
+  setSpaghettifyActive: (v: boolean) => void;
+  setSpaghettifyDone: (v: boolean) => void;
+  resetSpaghettify: () => void;
+
+  // Time clock actions
+  setShowTimeClock: (v: boolean) => void;
 }
 
 const defaultProbeConfig: ProbeConfig = {
@@ -65,6 +80,13 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
   probeTrail: [],
   probeClassification: null,
 
+  // Spaghettification defaults
+  spaghettifyActive: false,
+  spaghettifyDone: false,
+
+  // Time clock default
+  showTimeClock: false,
+
   setConfig: (patch) => set((s) => ({ config: { ...s.config, ...patch } })),
   setAnalysis: (a) => set({ analysis: a }),
   setLoading: (v) => set({ isLoading: v }),
@@ -86,4 +108,16 @@ export const useSimulationStore = create<SimulationStore>((set) => ({
       probeTrail: [],
       probeClassification: null,
     }),
+
+  // Spaghettification actions
+  setSpaghettifyActive: (v) => set({ spaghettifyActive: v }),
+  setSpaghettifyDone: (v) => set({ spaghettifyDone: v }),
+  resetSpaghettify: () =>
+    set({
+      spaghettifyActive: false,
+      spaghettifyDone: false,
+    }),
+
+  // Time clock actions
+  setShowTimeClock: (v) => set({ showTimeClock: v }),
 }));

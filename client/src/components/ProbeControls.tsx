@@ -364,10 +364,16 @@ export default function ProbeControls() {
     setProbeConfig,
     setProbeActive,
     resetProbe,
+    spaghettifyActive,
+    spaghettifyDone,
+    setSpaghettifyActive,
+    resetSpaghettify,
   } = useSimulationStore();
 
   const [launchHovered, setLaunchHovered] = useState(false);
   const [resetHovered, setResetHovered] = useState(false);
+  const [dropHovered, setDropHovered] = useState(false);
+  const [probeMode, setProbeMode] = useState<"probe" | "drop">("probe");
 
   const handleLaunch = () => {
     resetProbe();
@@ -378,6 +384,15 @@ export default function ProbeControls() {
 
   const handleReset = () => {
     resetProbe();
+    resetSpaghettify();
+  };
+
+  const handleDrop = () => {
+    resetSpaghettify();
+    resetProbe();
+    setTimeout(() => {
+      setSpaghettifyActive(true);
+    }, 50);
   };
 
   const classificationColor = (() => {
@@ -554,7 +569,57 @@ export default function ProbeControls() {
         </div>
       </div>
 
-      {/* Scrollable controls */}
+      {/* Mode toggle */}
+      <div
+        style={{
+          margin: "12px 16px 0",
+          display: "flex",
+          gap: "4px",
+          padding: "3px",
+          background: "rgba(255,255,255,0.03)",
+          borderRadius: "6px",
+          border: "1px solid rgba(255,255,255,0.06)",
+          position: "relative",
+          zIndex: 2,
+        }}
+      >
+        {(["probe", "drop"] as const).map((mode) => (
+          <button
+            key={mode}
+            onClick={() => {
+              setProbeMode(mode);
+              handleReset();
+            }}
+            style={{
+              flex: 1,
+              padding: "6px 0",
+              background: probeMode === mode
+                ? mode === "probe"
+                  ? "rgba(0,229,255,0.12)"
+                  : "rgba(245,158,11,0.12)"
+                : "transparent",
+              border: probeMode === mode
+                ? `1px solid ${mode === "probe" ? "rgba(0,229,255,0.3)" : "rgba(245,158,11,0.3)"}`
+                : "1px solid transparent",
+              borderRadius: "4px",
+              color: probeMode === mode
+                ? mode === "probe" ? "#00e5ff" : "#fbbf24"
+                : "var(--text-muted)",
+              fontSize: "9px",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 600,
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+          >
+            {mode === "probe" ? "\u25B8 PROBE" : "\u2193 DROP"}
+          </button>
+        ))}
+      </div>
+
+      {/* Scrollable controls */
       <div style={{ flex: 1, overflowY: "auto", padding: "16px", position: "relative", zIndex: 2 }}>
         <Section title="Launch Vector" icon="⊹">
           <Slider
@@ -705,42 +770,79 @@ export default function ProbeControls() {
             transition: "all 0.25s ease",
           }}
         >
-          ⟲ ABORT
+          \u27f2 ABORT
         </button>
-        <button
-          onClick={handleLaunch}
-          disabled={isPending}
-          onMouseEnter={() => setLaunchHovered(true)}
-          onMouseLeave={() => setLaunchHovered(false)}
-          style={{
-            flex: 1.5,
-            padding: "10px 0",
-            background: isPending
-              ? "rgba(245,158,11,0.15)"
-              : launchHovered
-                ? "linear-gradient(135deg, #00e5ff, #0088cc)"
-                : "linear-gradient(135deg, #00b8d4, #006994)",
-            border: isPending
-              ? "1px solid rgba(245,158,11,0.3)"
-              : `1px solid ${launchHovered ? "#00e5ff" : "#00b8d4"}`,
-            borderRadius: "6px",
-            color: "#fff",
-            fontSize: "10px",
-            cursor: isPending ? "not-allowed" : "pointer",
-            letterSpacing: "0.1em",
-            fontFamily: "var(--font-mono)",
-            fontWeight: 700,
-            textTransform: "uppercase",
-            transition: "all 0.25s ease",
-            opacity: isPending ? 0.6 : 1,
-            boxShadow: launchHovered && !isPending
-              ? "0 0 20px rgba(0,229,255,0.3), inset 0 0 20px rgba(0,229,255,0.1)"
-              : "0 0 10px rgba(0,229,255,0.1)",
-            textShadow: "0 0 8px rgba(0,229,255,0.5)",
-          }}
-        >
-          {isPending ? "◌ COMPUTING..." : "▶ LAUNCH PROBE"}
-        </button>
+        {probeMode === "probe" ? (
+          <button
+            onClick={handleLaunch}
+            disabled={isPending}
+            onMouseEnter={() => setLaunchHovered(true)}
+            onMouseLeave={() => setLaunchHovered(false)}
+            style={{
+              flex: 1.5,
+              padding: "10px 0",
+              background: isPending
+                ? "rgba(245,158,11,0.15)"
+                : launchHovered
+                  ? "linear-gradient(135deg, #00e5ff, #0088cc)"
+                  : "linear-gradient(135deg, #00b8d4, #006994)",
+              border: isPending
+                ? "1px solid rgba(245,158,11,0.3)"
+                : `1px solid ${launchHovered ? "#00e5ff" : "#00b8d4"}`,
+              borderRadius: "6px",
+              color: "#fff",
+              fontSize: "10px",
+              cursor: isPending ? "not-allowed" : "pointer",
+              letterSpacing: "0.1em",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              transition: "all 0.25s ease",
+              opacity: isPending ? 0.6 : 1,
+              boxShadow: launchHovered && !isPending
+                ? "0 0 20px rgba(0,229,255,0.3), inset 0 0 20px rgba(0,229,255,0.1)"
+                : "0 0 10px rgba(0,229,255,0.1)",
+              textShadow: "0 0 8px rgba(0,229,255,0.5)",
+            }}
+          >
+            {isPending ? "\u25cc COMPUTING..." : "\u25b6 LAUNCH PROBE"}
+          </button>
+        ) : (
+          <button
+            onClick={handleDrop}
+            disabled={spaghettifyActive && !spaghettifyDone}
+            onMouseEnter={() => setDropHovered(true)}
+            onMouseLeave={() => setDropHovered(false)}
+            style={{
+              flex: 1.5,
+              padding: "10px 0",
+              background: (spaghettifyActive && !spaghettifyDone)
+                ? "rgba(245,158,11,0.15)"
+                : dropHovered
+                  ? "linear-gradient(135deg, #fbbf24, #d97706)"
+                  : "linear-gradient(135deg, #f59e0b, #b45309)",
+              border: (spaghettifyActive && !spaghettifyDone)
+                ? "1px solid rgba(245,158,11,0.3)"
+                : `1px solid ${dropHovered ? "#fbbf24" : "#f59e0b"}`,
+              borderRadius: "6px",
+              color: "#fff",
+              fontSize: "10px",
+              cursor: (spaghettifyActive && !spaghettifyDone) ? "not-allowed" : "pointer",
+              letterSpacing: "0.1em",
+              fontFamily: "var(--font-mono)",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              transition: "all 0.25s ease",
+              opacity: (spaghettifyActive && !spaghettifyDone) ? 0.6 : 1,
+              boxShadow: dropHovered && !(spaghettifyActive && !spaghettifyDone)
+                ? "0 0 20px rgba(245,158,11,0.3), inset 0 0 20px rgba(245,158,11,0.1)"
+                : "0 0 10px rgba(245,158,11,0.1)",
+              textShadow: "0 0 8px rgba(245,158,11,0.5)",
+            }}
+          >
+            {(spaghettifyActive && !spaghettifyDone) ? "\u25cc FALLING..." : "\u2193 DROP OBJECT"}
+          </button>
+        )
       </div>
 
       <style>{`
