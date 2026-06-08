@@ -363,7 +363,7 @@ function drawHUDGrid(ctx: CanvasRenderingContext2D, w: number, h: number, dpr: n
   ctx.restore();
 }
 
-function drawCornerHUD(ctx: CanvasRenderingContext2D, w: number, h: number, dpr: number, probeActive: boolean, classification: string | null) {
+function drawCornerHUD(ctx: CanvasRenderingContext2D, w: number, _h: number, dpr: number, probeActive: boolean, classification: string | null) {
   ctx.save();
   const fontSize = 8 * dpr;
   ctx.font = `${fontSize}px "JetBrains Mono", monospace`;

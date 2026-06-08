@@ -238,7 +238,7 @@ function DistanceSlider({
 
 // ── Main Component ───────────────────────────────────────────────────────────
 export default function TimeDilationClock() {
-  const { config, showTimeClock, setShowTimeClock } = useSimulationStore();
+  const { showTimeClock, setShowTimeClock } = useSimulationStore();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef(0);
