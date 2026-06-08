@@ -619,7 +619,7 @@ export default function ProbeControls() {
         ))}
       </div>
 
-      {/* Scrollable controls */
+      {/* Scrollable controls */}
       <div style={{ flex: 1, overflowY: "auto", padding: "16px", position: "relative", zIndex: 2 }}>
         <Section title="Launch Vector" icon="⊹">
           <Slider
@@ -770,7 +770,7 @@ export default function ProbeControls() {
             transition: "all 0.25s ease",
           }}
         >
-          \u27f2 ABORT
+          &#x27F2; ABORT
         </button>
         {probeMode === "probe" ? (
           <button
@@ -805,7 +805,7 @@ export default function ProbeControls() {
               textShadow: "0 0 8px rgba(0,229,255,0.5)",
             }}
           >
-            {isPending ? "\u25cc COMPUTING..." : "\u25b6 LAUNCH PROBE"}
+            {isPending ? "\u25CC COMPUTING..." : "\u25B6 LAUNCH PROBE"}
           </button>
         ) : (
           <button
@@ -840,9 +840,9 @@ export default function ProbeControls() {
               textShadow: "0 0 8px rgba(245,158,11,0.5)",
             }}
           >
-            {(spaghettifyActive && !spaghettifyDone) ? "\u25cc FALLING..." : "\u2193 DROP OBJECT"}
+            {(spaghettifyActive && !spaghettifyDone) ? "\u25CC FALLING..." : "\u2193 DROP OBJECT"}
           </button>
-        )
+        )}
       </div>
 
       <style>{`
