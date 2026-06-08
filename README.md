@@ -1,168 +1,154 @@
 # Black Hole Visualizer
 
-A real-time, physically accurate black hole simulation built with React, Three.js, and FastAPI. Visualizes gravitational lensing, accretion disk dynamics, Hawking radiation, and relativistic time dilation using numerical solutions to the Schwarzschild and Kerr geodesic equations.
+An interactive, physically-grounded black hole simulation built with React, WebGL, and a FastAPI physics backend. Explore gravitational lensing, accretion disk dynamics, relativistic time dilation, spacecraft geodesics, and spaghettification — all in real time.
 
-**Live:** https://black-hole-visualizer.vercel.app
-
----
-
-## Overview
-
-Black Hole Visualizer combines relativistic physics computation with GPU-accelerated rendering to produce an interactive simulation of black hole spacetime. Users can configure black hole parameters in real time and observe the corresponding changes in gravitational lensing, photon sphere geometry, Doppler shifting across the accretion disk, and time dilation at varying observer distances.
-
-A curated catalog of real astronomical black holes — including Sagittarius A*, M87*, and Cygnus X-1 — can be loaded directly into the simulator from published observational data.
+![Black Hole Visualizer](https://img.shields.io/badge/status-active-brightgreen) ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript) ![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi) ![WebGL](https://img.shields.io/badge/WebGL-2.0-990000?logo=webgl)
 
 ---
 
 ## Features
 
-- **Gravitational Lensing** — GLSL fragment shader implementing Schwarzschild lensing with Kerr frame-dragging corrections
-- **Accretion Disk** — Keplerian rotation with blackbody temperature gradient, relativistic Doppler brightening, and asymmetric blueshift/redshift
-- **Ray Tracing** — Numerical integration of geodesic equations via SciPy, streamed to the client over WebSocket
-- **Time Dilation Overlay** — Real-time computation of gravitational time dilation from the Schwarzschild metric
-- **Hawking Radiation** — Visual representation of quantum evaporation scaled to black hole mass
-- **NASA Catalog** — Five real black holes with published mass, spin, distance, and discovery metadata
-- **Save and Share** — Persist any simulation configuration and generate a shareable link
-- **Responsive Layout** — Full mobile support with collapsible sidebar
+### Visualization
+- **WebGL renderer** — custom GLSL fragment shader simulating gravitational lensing, a relativistic accretion disk with Doppler blueshifting/redshifting, an Einstein ring, relativistic jets, and Hawking radiation particles
+- **Starmap lensing** — background star field is distorted in real time around the photon sphere using a Schwarzschild deflection model
+- **Accretion disk** — temperature gradient (blue-white core → orange-red outer rim), inclination-aware Doppler effect, and Keplerian rotation
 
----
+### Controls
+- Adjust **mass** (0.1 – 10,000,000 M☉), **spin** (Kerr parameter 0–0.999), **accretion rate**, and **viewing inclination**
+- Toggle **Hawking radiation** and **time dilation** overlays
+- Physics readout panel with Schwarzschild radius, shadow radius, photon sphere, Einstein ring, deflection angle, and Doppler factors
 
-## Tech Stack
+### Spacecraft Probe
+- Launch a test-particle probe with configurable **orbit radius**, **trajectory angle**, and **thrust speed**
+- Real-time **RK4 geodesic integration** in Schwarzschild spacetime (effective-potential formulation)
+- Trail rendering with classification-coloured glow: **cyan** (pending) → **red** (captured) / **green** (escape) / **blue** (stable orbit)
+- HUD overlay showing live r, φ, and proper time τ
+- Thrust and explosion particle systems
 
-**Frontend**
-- React 19 with TypeScript
-- Three.js via React Three Fiber
-- Custom GLSL shaders (vertex + fragment)
-- Zustand for global state
-- Tailwind CSS v4
-- Vite
+### Spaghettification Mode
+- Drop an object toward the singularity and watch tidal stretching in action
 
-**Backend**
-- FastAPI
-- NumPy + SciPy (geodesic integration, lensing mathematics)
-- SQLAlchemy with PostgreSQL
-- WebSocket ray streaming
-- Uvicorn
+### Gravitational Time Dilation Clock
+- Side-by-side analog clocks: far observer vs. near-horizon observer
+- Adjustable observer distance slider — time factor computed as √(1 − Rₛ/r)
 
-**Infrastructure**
-- Frontend: Vercel
-- Backend + Database: Render (Web Service + PostgreSQL)
+### Catalog & Sharing
+- Built-in NASA catalog: Sgr A\*, M87\*, Cygnus X-1, TON 618, GW150914
+- Save simulation state as a PNG export with full physics readout
+- Share simulations via URL-based tokens
 
 ---
 
 ## Architecture
 
 ```
-client/
-  src/
-    api/          # Axios REST client
-    components/   # Canvas, ControlPanel, CatalogPanel, InfoOverlay, ShareModal
-    hooks/        # useBlackHole, useNASAData, useSimulation, useWebSocket
-    shaders/      # lensing.vert.glsl, lensing.frag.glsl
-    store/        # Zustand simulation store
-    types/        # TypeScript interfaces
-
-server/
-  routers/        # physics, nasa, simulation endpoints
-  services/       # physics_engine.py, nasa_service.py
-  websocket/      # stream_engine.py (ray streaming)
-  db/             # SQLAlchemy models, schema, migrations
-  models/         # Pydantic request/response models
-```
-
-**Data flow:**
-```
-Browser (Vercel)
-  |-- HTTPS REST --> FastAPI (Render)  --> PostgreSQL (Render)
-  |-- WSS         --> /ws/raystream    --> SciPy geodesic solver
+black-hole-visualizer/
+├── client/                  # React + TypeScript frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── BlackHoleCanvas.tsx       # WebGL renderer
+│   │   │   ├── SpacecraftOverlay.tsx     # Canvas 2D geodesic overlay
+│   │   │   ├── TimeDilationClock.tsx     # Analog clock widget
+│   │   │   ├── SpaghettificationOverlay.tsx
+│   │   │   ├── ControlPanel.tsx          # Sliders and toggles
+│   │   │   ├── ProbeControls.tsx         # Probe launch UI
+│   │   │   ├── CatalogPanel.tsx          # NASA catalog
+│   │   │   ├── InfoOverlay.tsx
+│   │   │   ├── ShareModal.tsx
+│   │   │   └── Savemodal.tsx
+│   │   ├── hooks/
+│   │   │   ├── useBlackHole.ts           # Physics API + local fallback
+│   │   │   ├── useNASAData.ts            # Catalog hook
+│   │   │   ├── useSimulation.ts          # Save / share
+│   │   │   └── useWebSocket.ts           # Ray-stream WebSocket
+│   │   ├── store/
+│   │   │   └── simulationStore.ts        # Zustand global state
+│   │   ├── utils/
+│   │   │   ├── geodesic.ts               # RK4 Schwarzschild integrator
+│   │   │   └── localphysics.ts           # Client-side physics fallback
+│   │   ├── types/
+│   │   │   ├── blackhole.ts
+│   │   │   └── nasa.ts
+│   │   └── shaders/
+│   │       ├── lensing.frag.glsl
+│   │       └── lensing.vert.glsl
+│   ├── package.json
+│   └── vite.config.ts
+│
+└── server/                  # FastAPI Python backend
+    ├── main.py
+    ├── requirements.txt
+    ├── routers/
+    │   ├── physics.py        # Lensing, time dilation, ray tracing, Doppler
+    │   ├── nasa.py           # Black hole catalog + NASA APOD
+    │   └── simulation.py     # Save / load / share endpoints
+    ├── services/
+    │   ├── physics_engine.py # NumPy/SciPy physics computations
+    │   └── nasa_service.py   # Catalog data + NASA API integration
+    ├── websocket/
+    │   └── stream_engine.py  # WebSocket ray streaming
+    └── db/
+        ├── database.py       # SQLAlchemy setup (SQLite / PostgreSQL)
+        └── schema.py         # Simulation and ShareToken models
 ```
 
 ---
 
-## Physics
+## Getting Started
 
-The simulation implements the following:
+### Prerequisites
 
-**Schwarzschild Metric**
-Event horizon radius, photon sphere at 1.5 Rs, shadow radius at (3√3/2) Rs, and Einstein ring radius. Gravitational time dilation computed as d-tau/dt = sqrt(1 - Rs/r).
-
-**Geodesic Ray Tracing**
-Light ray paths solved via `scipy.integrate.solve_ivp` on the geodesic ODE system in Schwarzschild spacetime. Impact parameters sweep from just outside the photon sphere to the far field.
-
-**Kerr Frame Dragging**
-Spin parameter a (0 to 0.999) modifies lensing asymmetry and accretion disk rotation in the shader via a tangential twist term.
-
-**Relativistic Doppler**
-Disk color shift computed as f_obs/f_emit = sqrt((1+beta)/(1-beta)) where beta is the projected tangential velocity at a given inclination.
-
-**Hawking Temperature**
-T_H = hbar * c^3 / (8 * pi * G * M * k_B), displayed in Kelvin from the control panel.
+- **Node.js** 18+ and npm
+- **Python** 3.11+
+- (Optional) PostgreSQL for production; SQLite is used by default
 
 ---
 
-## Local Development
-
-**Prerequisites:** Node.js 18+, Python 3.11+
-
-**Backend**
-
-```bash
-cd server
-python -m venv venv
-source venv/bin/activate       # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env           # set NASA_API_KEY and DATABASE_URL
-uvicorn main:app --reload --port 8000
-```
-
-**Frontend**
+### Frontend
 
 ```bash
 cd client
 npm install
-cp .env.example .env.local     # set VITE_API_URL and VITE_WS_URL
-npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+Create a `.env` file in `client/`:
 
-**Environment Variables**
-
-Backend (`server/.env`):
-```
-DATABASE_URL=postgresql://user:password@host/dbname
-NASA_API_KEY=your_nasa_api_key
-FRONTEND_URL=http://localhost:5173
-ALLOWED_ORIGINS=http://localhost:5173
-```
-
-Frontend (`client/.env.local`):
-```
+```env
+# Optional — if not set, the app runs entirely with the client-side physics fallback
 VITE_API_URL=http://localhost:8000
 VITE_WS_URL=ws://localhost:8000/ws/raystream
 ```
 
+```bash
+npm run dev
+```
+
+The app is available at `http://localhost:5173`. It works fully offline — if the API is unreachable, all physics fall back to the built-in TypeScript implementation.
+
 ---
 
-## Deployment
+### Backend
 
-**Backend — Render**
+```bash
+cd server
+python -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-- Service type: Web Service
-- Root directory: `server`
-- Build command: `pip install -r requirements.txt`
-- Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-- Add a Render PostgreSQL instance and connect via `DATABASE_URL` environment variable
+Create a `.env` file in `server/`:
 
-**Frontend — Vercel**
+```env
+DATABASE_URL=sqlite:///./blackhole.db   # or a PostgreSQL URL
+NASA_API_KEY=DEMO_KEY                   # optional — get a free key at api.nasa.gov
+FRONTEND_URL=http://localhost:5173      # used to generate share links
+```
 
-- Root directory: `client`
-- Framework preset: Vite
-- Build command: `npm run build`
-- Output directory: `dist`
-- Set `VITE_API_URL` and `VITE_WS_URL` in Vercel environment variables
+```bash
+uvicorn main:app --reload --port 8000
+```
 
-A `vercel.json` rewrite rule is included to handle SPA client-side routing for share links (`/share/:token`).
+Interactive API docs are available at `http://localhost:8000/docs`.
 
 ---
 
@@ -170,29 +156,59 @@ A `vercel.json` rewrite rule is included to handle SPA client-side routing for s
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/physics/full-analysis` | Lensing, time dilation, Doppler, ray paths |
-| POST | `/api/physics/lensing` | Gravitational lensing parameters |
-| POST | `/api/physics/time-dilation` | Time dilation at observer distance |
-| POST | `/api/physics/raytrace` | Trace N light rays |
-| GET | `/api/nasa/catalog` | Full black hole catalog |
-| GET | `/api/nasa/blackhole/{name}` | Single black hole by slug |
-| POST | `/api/simulation/save` | Persist simulation configuration |
-| GET | `/api/simulation/load/{id}` | Load simulation by ID |
-| POST | `/api/simulation/share/{id}` | Generate share token |
-| GET | `/api/simulation/share/{token}` | Load simulation by share token |
-| WS | `/ws/raystream` | Stream ray paths in real time |
+| `POST` | `/api/physics/full-analysis` | Lensing + time dilation + Doppler + ray trace in one call |
+| `POST` | `/api/physics/lensing` | Gravitational lensing parameters |
+| `POST` | `/api/physics/time-dilation` | Time dilation factor at a given observer distance |
+| `POST` | `/api/physics/raytrace` | Trace N light rays around the black hole |
+| `GET`  | `/api/physics/doppler` | Relativistic Doppler shift factors |
+| `GET`  | `/api/nasa/catalog` | Black hole catalog |
+| `GET`  | `/api/nasa/blackhole/{name}` | Single catalog entry |
+| `POST` | `/api/simulation/save` | Persist a configuration |
+| `GET`  | `/api/simulation/load/{id}` | Load by ID |
+| `POST` | `/api/simulation/share/{id}` | Generate share token |
+| `GET`  | `/api/simulation/share/{token}` | Load by share token |
+| `WS`   | `/ws/raystream` | Stream ray paths in real time |
 
 ---
 
-## NASA Catalog
+## Physics Notes
 
-| Name | Type | Mass | Distance |
-|------|------|------|----------|
-| Sagittarius A* | Supermassive | 4.1M solar | 26,000 ly |
-| M87* | Supermassive | 6.5B solar | 53.5M ly |
-| Cygnus X-1 | Stellar | 21.2 solar | 7,200 ly |
-| TON 618 | Ultramassive | 66B solar | 10.4B ly |
-| GW150914 | Stellar | 62 solar | 1.3B ly |
+The simulation is based on the **Schwarzschild metric** (non-rotating black hole model with spin visually added via frame-dragging in the shader):
+
+- All lengths are internally in units of the **Schwarzschild radius** Rₛ = 2GM/c²
+- The **geodesic integrator** uses RK4 with the effective-potential formulation:
+  d²r/dτ² = −1/(2r²) + L²/r³ − 3L²/(2r⁴)
+- **Time dilation** factor: dτ/dt = √(1 − Rₛ/r)
+- **Photon sphere** at r = 1.5 Rₛ, **ISCO** at r = 3 Rₛ, **event horizon** at r = Rₛ
+- Probe classification thresholds: r ≤ Rₛ → captured; r > 50 Rₛ → escaped; Δφ ≥ 4π → stable orbit
+
+---
+
+## Deployment
+
+### Frontend (Vercel)
+
+The `client/vercel.json` includes a catch-all rewrite rule for SPA routing. Connect the `client/` directory to a Vercel project and set environment variables via the Vercel dashboard.
+
+### Backend
+
+Any platform supporting Python + uvicorn works (Railway, Render, Fly.io, etc.). Set `DATABASE_URL` to a PostgreSQL connection string for production persistence.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend framework | React 19, TypeScript 6 |
+| Bundler | Vite 8 |
+| Styling | Tailwind CSS 4 |
+| 3D / GPU | WebGL 2, custom GLSL shaders |
+| State management | Zustand 5 |
+| HTTP client | Axios |
+| Physics backend | FastAPI, NumPy, SciPy |
+| Database | SQLAlchemy + SQLite / PostgreSQL |
+| Real-time | WebSocket (FastAPI + native browser API) |
 
 ---
 
